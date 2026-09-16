@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Inkrepublik.Data/Inkrepublik.Data.csproj" />
+    <Project Path="src/Inkrepublik.Domain/Inkrepublik.Domain.csproj" />
+    <Project Path="src/Inkrepublik.Services/Inkrepublik.Services.csproj" />
+    <Project Path="src/Inkrepublik.Web/Inkrepublik.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Inkrepublik.Tests/Inkrepublik.Tests.csproj" />
+  </Folder>
+</Solution>
