@@ -1,0 +1,278 @@
+@page "/admin/calendar"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Inkrepublik.Domain.Enums
+@inject IAdminCalendarService CalendarService
+@inject IArtistService ArtistService
+
+<PageTitle>Calendar — Inkrepublik Admin</PageTitle>
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Calendar</h1>
+    <p class="admin-page-lead">All bookings by day and time.</p>
+</div>
+
+<!-- Controls -->
+<div class="cal-controls">
+    <div class="cal-nav">
+        <button class="btn btn-ghost cal-nav-btn" @onclick="PreviousWeek" title="Previous week">‹</button>
+        <button class="btn btn-ghost cal-nav-btn" @onclick="GoToToday">Today</button>
+        <button class="btn btn-ghost cal-nav-btn" @onclick="NextWeek" title="Next week">›</button>
+    </div>
+
+    <div class="cal-range">
+        @_rangeStart.ToString("d MMM") – @_rangeEnd.AddDays(-1).ToString("d MMM yyyy")
+    </div>
+
+    <div class="cal-filters">
+        <select class="form-control cal-filter" @bind="_artistId" @bind:after="OnFilterChanged">
+            <option value="">All artists</option>
+            @foreach (var artist in _artists)
+            {
+                <option value="@artist.Id">@artist.Name</option>
+            }
+        </select>
+
+        <select class="form-control cal-filter" @bind="_statusFilterRaw" @bind:after="OnFilterChanged">
+            <option value="Actionable">Pending + Confirmed</option>
+            <option value="All">All statuses</option>
+            <option value="Pending">Pending only</option>
+            <option value="Confirmed">Confirmed only</option>
+            <option value="Completed">Completed only</option>
+        </select>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading calendar…</p>
+}
+else
+{
+    <div class="cal-wrap">
+        <!-- Header row: day names + dates -->
+        <div class="cal-header">
+            <div class="cal-time-gutter"></div>
+            @foreach (var day in _days)
+            {
+                <div class="cal-day-head @(IsToday(day) ? "is-today" : "")">
+                    <span class="cal-day-name">@day.ToString("ddd")</span>
+                    <span class="cal-day-date">@day.Day</span>
+                </div>
+            }
+        </div>
+
+        <!-- Time grid -->
+        <div class="cal-body">
+            <!-- Time gutter column -->
+            <div class="cal-time-gutter">
+                @foreach (var slot in _timeSlots)
+                {
+                    <div class="cal-time-slot">@slot.ToString("HH:mm")</div>
+                }
+            </div>
+
+            <!-- Day columns -->
+            @foreach (var day in _days)
+            {
+                <div class="cal-day-col @(IsToday(day) ? "is-today" : "")">
+                    @foreach (var slot in _timeSlots)
+                    {
+                        var slotBookings = GetBookingsInSlot(day, slot);
+                        <div class="cal-slot">
+                            @if (slotBookings.Count > 0)
+                            {
+                                <div class="cal-slot-bookings @SlotColumnsClass(slotBookings.Count)">
+                                    @foreach (var booking in slotBookings)
+                                    {
+                                        <a href="/admin/bookings/@booking.Id"
+                                           class="cal-booking cal-booking--@booking.Status.ToString().ToLower()"
+                                           style="border-left-color: @GetArtistColor(booking.ArtistId);"
+                                           title="@booking.ClientName — @booking.Status">
+                                            <span class="cal-booking-time">
+                                                @booking.PreferredDateTime.ToString("HH:mm")
+                                            </span>
+                                            <span class="cal-booking-name">@booking.ClientName</span>
+                                            @if (booking.Artist is not null)
+                                            {
+                                                <span class="cal-booking-artist">@FirstName(booking.Artist.Name)</span>
+                                            }
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="cal-legend">
+        <span class="cal-legend-item">
+            <span class="cal-legend-swatch cal-legend-swatch--pending"></span> Pending
+        </span>
+        <span class="cal-legend-item">
+            <span class="cal-legend-swatch cal-legend-swatch--confirmed"></span> Confirmed
+        </span>
+        <span class="cal-legend-item">
+            <span class="cal-legend-swatch cal-legend-swatch--completed"></span> Completed
+        </span>
+        <span class="cal-legend-note">Left border colour = artist</span>
+    </div>
+}
+
+@code {
+    private List<DateTime> _days = [];
+    private List<TimeOnly> _timeSlots = [];
+    private List<BookingRequest> _bookings = [];
+    private List<Artist> _artists = [];
+
+    // Initialize to today's week so the first render has valid dates.
+    private DateTime _rangeStart = StartOfWeek(DateTime.Today);
+    private DateTime _rangeEnd = StartOfWeek(DateTime.Today).AddDays(7);    
+
+    private int? _artistId;
+    private string _statusFilterRaw = "Actionable";
+    private bool _loading = true;
+
+    // Calendar day boundaries: 09:00 – 18:00, 60-min visual rows.
+    private static readonly TimeOnly DayStart = new(9, 0);
+    private static readonly TimeOnly DayEnd = new(18, 0);
+
+    // Artist colour palette — cycles by artist id.
+    private static readonly string[] ArtistColors =
+    [
+        "#8B1A1A", // crimson
+        "#c8b88a", // gold
+        "#6fc27c", // green
+        "#7aa9d9", // blue
+        "#c58cc4", // purple
+        "#d99e6a", // orange
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _timeSlots = BuildTimeSlots();
+        RebuildDays(); // ensure _days is populated for the first render
+
+        _artists = await ArtistService.GetActiveArtistsAsync();
+        await LoadAsync();
+    }
+
+    private void PreviousWeek()
+    {
+        _rangeStart = _rangeStart.AddDays(-7);
+        _rangeEnd = _rangeEnd.AddDays(-7);
+        RebuildDays();
+        _ = LoadAsync();
+    }
+
+    private void NextWeek()
+    {
+        _rangeStart = _rangeStart.AddDays(7);
+        _rangeEnd = _rangeEnd.AddDays(7);
+        RebuildDays();
+        _ = LoadAsync();
+    }
+
+    private void GoToToday()
+    {
+        GoToTodayInternal();
+        _ = LoadAsync();
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        // Weeks start on Monday.
+        var daysSinceMonday = ((int)date.DayOfWeek + 6) % 7;
+        return date.Date.AddDays(-daysSinceMonday);
+    }
+
+    private void GoToTodayInternal()
+    {
+        _rangeStart = StartOfWeek(DateTime.Today);
+        _rangeEnd = _rangeStart.AddDays(7);
+        RebuildDays();
+    }
+
+    private void RebuildDays()
+    {
+        _days = Enumerable.Range(0, 7).Select(i => _rangeStart.AddDays(i)).ToList();
+    }
+
+    private async Task OnFilterChanged()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+
+        var statuses = _statusFilterRaw switch
+        {
+            "All" => null,
+            "Pending" => new[] { BookingStatus.Pending },
+            "Confirmed" => new[] { BookingStatus.Confirmed },
+            "Completed" => new[] { BookingStatus.Completed },
+            _ => new[] { BookingStatus.Pending, BookingStatus.Confirmed },
+        };
+
+        _bookings = await CalendarService.GetBookingsInRangeAsync(
+            _rangeStart.ToUniversalTime(),
+            _rangeEnd.ToUniversalTime(),
+            statuses,
+            _artistId);
+
+        _loading = false;
+    }
+
+    /// <summary>
+    /// Bookings whose start time falls in this day+slot.
+    /// Slots are 60 minutes wide starting at DayStart.
+    /// </summary>
+    private List<BookingRequest> GetBookingsInSlot(DateTime day, TimeOnly slotStart)
+    {
+        var slotEnd = slotStart.AddHours(1);
+
+        return _bookings
+            .Where(b =>
+            {
+                var local = b.PreferredDateTime.ToLocalTime();
+                if (local.Date != day.Date) return false;
+
+                var t = TimeOnly.FromDateTime(local);
+                return t >= slotStart && t < slotEnd;
+            })
+            .ToList();
+    }
+
+    private static string SlotColumnsClass(int count) => count switch
+    {
+        1 => "cal-slot-bookings--1",
+        2 => "cal-slot-bookings--2",
+        _ => "cal-slot-bookings--many",
+    };
+
+    private string GetArtistColor(int? artistId)
+    {
+        if (artistId is null) return "#666666";
+        return ArtistColors[artistId.Value % ArtistColors.Length];
+    }
+
+    private static string FirstName(string fullName) => fullName.Split(' ')[0];
+
+    private static bool IsToday(DateTime d) => d.Date == DateTime.Today;
+
+    private static List<TimeOnly> BuildTimeSlots()
+    {
+        var slots = new List<TimeOnly>();
+        for (var t = DayStart; t < DayEnd; t = t.AddHours(1))
+            slots.Add(t);
+        return slots;
+    }
+}
