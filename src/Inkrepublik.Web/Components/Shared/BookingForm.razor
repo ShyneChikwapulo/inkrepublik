@@ -1,0 +1,324 @@
+@* =========================================================================
+   BOOKING FORM
+   Client-facing booking request form. Saves via IBookingService and
+   triggers the owner + client emails.
+   ========================================================================= *@
+
+@inject IBookingService BookingService
+@inject IArtistService ArtistService
+@inject IServiceCatalogService ServiceCatalog
+@inject IOptions<StudioOptions> StudioOptions
+
+@if (_submitted && _createdBooking is not null)
+{
+    <div class="booking-success">
+        <div class="booking-success-icon">✓</div>
+        <h2 class="booking-success-title">Request received</h2>
+        <p class="booking-success-text">
+            Thanks, @_createdBooking.ClientName. We've sent a confirmation to
+            <strong>@_createdBooking.ClientEmail</strong> — check your inbox for
+            a link to view or cancel this request.
+        </p>
+        <div class="booking-success-summary">
+            <p class="booking-success-label">Your requested appointment</p>
+            <p class="booking-success-date">
+                @_createdBooking.PreferredDateTime.ToString("dddd, d MMMM yyyy 'at' HH:mm")
+            </p>
+        </div>
+        <p class="booking-success-note">
+            We'll be in touch within 24 hours to confirm the details.
+        </p>
+        <button class="btn btn-ghost" @onclick="ResetForm">Submit another request</button>
+    </div>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit" FormName="booking">
+        <DataAnnotationsValidator />
+
+        <!-- Contact details -->
+        <fieldset class="booking-fieldset">
+            <legend class="booking-legend">Your details</legend>
+
+            <div class="booking-grid-2">
+                <div class="form-field">
+                    <label class="form-label" for="book-name">Name *</label>
+                    <InputText id="book-name" class="form-control"
+                               @bind-Value="_model.ClientName"
+                               placeholder="Your full name" />
+                    <ValidationMessage For="() => _model.ClientName" />
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label" for="book-email">Email *</label>
+                    <InputText id="book-email" type="email" class="form-control"
+                               @bind-Value="_model.ClientEmail"
+                               placeholder="your@email.com" />
+                    <ValidationMessage For="() => _model.ClientEmail" />
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="book-phone">Phone (optional)</label>
+                <InputText id="book-phone" class="form-control"
+                           @bind-Value="_model.ClientPhone"
+                           placeholder="+27 82 000 0000" />
+                <ValidationMessage For="() => _model.ClientPhone" />
+            </div>
+        </fieldset>
+
+        <!-- Appointment -->
+        <fieldset class="booking-fieldset">
+            <legend class="booking-legend">Appointment</legend>
+
+            <div class="booking-grid-2">
+                <div class="form-field">
+                    <label class="form-label" for="book-artist">Artist preference</label>
+                    <InputSelect id="book-artist" class="form-control"
+                                 @bind-Value="_model.ArtistId">
+                        <option value="">No preference</option>
+                        @foreach (var artist in _artists)
+                        {
+                            <option value="@artist.Id">@artist.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label" for="book-service">Service</label>
+                    <InputSelect id="book-service" class="form-control"
+                                 @bind-Value="_model.ServiceId">
+                        <option value="">Not sure yet</option>
+                        @foreach (var service in _services)
+                        {
+                            <option value="@service.Id">@service.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="booking-grid-2">
+                <div class="form-field">
+                    <label class="form-label" for="book-date">Preferred date *</label>
+                    <InputSelect id="book-date" class="form-control"
+                                 @bind-Value="_model.PreferredDate">
+                        @foreach (var date in _availableDates)
+                        {
+                            <option value="@date.ToString("yyyy-MM-dd")">
+                                @date.ToString("dddd, d MMMM")
+                            </option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => _model.PreferredDate" />
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label" for="book-time">Preferred time *</label>
+                    <InputSelect id="book-time" class="form-control"
+                                 @bind-Value="_model.PreferredTime">
+                        @foreach (var time in _availableTimes)
+                        {
+                            <option value="@time.ToString("HH:mm")">
+                                @time.ToString("HH:mm")
+                            </option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => _model.PreferredTime" />
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Description -->
+        <fieldset class="booking-fieldset">
+            <legend class="booking-legend">Your idea</legend>
+
+            <div class="form-field">
+                <label class="form-label" for="book-desc">Tell us about it *</label>
+                <InputTextArea id="book-desc" class="form-control" rows="6"
+                               @bind-Value="_model.Description"
+                               placeholder="What you'd like, placement, size, style, any reference images you'll bring, etc." />
+                <ValidationMessage For="() => _model.Description" />
+            </div>
+        </fieldset>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <p class="form-error">@_errorMessage</p>
+        }
+
+        <button type="submit" class="btn btn-primary booking-submit" disabled="@_submitting">
+            @(_submitting ? "Sending…" : "Submit Booking Request")
+        </button>
+
+        <p class="booking-disclaimer">
+            This is a request, not a confirmed booking. We'll reply within 24 hours
+            with availability and next steps.
+        </p>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? PrefillArtistId { get; set; }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private BookingFormModel _model = new();
+    private List<Artist> _artists = [];
+    private List<Service> _services = [];
+    private List<DateOnly> _availableDates = [];
+    private List<TimeOnly> _availableTimes = [];
+    private BookingRequest? _createdBooking;
+    private bool _submitting;
+    private bool _submitted;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load artists + services in parallel
+        var artistsTask = ArtistService.GetActiveArtistsAsync();
+        var servicesTask = ServiceCatalog.GetActiveServicesAsync();
+        await Task.WhenAll(artistsTask, servicesTask);
+
+        _artists = await artistsTask;
+        _services = await servicesTask;
+
+        // Build the date and time dropdowns
+        _availableDates = BuildAvailableDates();
+        _availableTimes = BuildAvailableTimes();
+
+        // Default to the first available date/time
+        _model.PreferredDate = _availableDates.FirstOrDefault();
+        _model.PreferredTime = _availableTimes.FirstOrDefault();
+
+        // Apply the ?artistId=X prefill if present
+        if (PrefillArtistId.HasValue && _artists.Any(a => a.Id == PrefillArtistId.Value))
+        {
+            _model.ArtistId = PrefillArtistId.Value;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _submitting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var input = new BookingRequestInput
+            {
+                ClientName = _model.ClientName.Trim(),
+                ClientEmail = _model.ClientEmail.Trim(),
+                ClientPhone = string.IsNullOrWhiteSpace(_model.ClientPhone) ? null : _model.ClientPhone.Trim(),
+                ArtistId = _model.ArtistId,
+                ServiceId = _model.ServiceId,
+                PreferredDate = _model.PreferredDate,
+                PreferredTime = _model.PreferredTime,
+                Description = _model.Description.Trim(),
+            };
+
+            var options = StudioOptions.Value;
+
+            _createdBooking = await BookingService.SubmitAsync(
+                input,
+                options.OwnerEmail,
+                options.PublicBaseUrl);
+
+            _submitted = true;
+
+            // Scroll to top so the success message is visible
+            await JS.InvokeVoidAsync("scrollTo", 0, 0);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Something went wrong submitting your request. Please try again.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        _model = new BookingFormModel
+        {
+            PreferredDate = _availableDates.FirstOrDefault(),
+            PreferredTime = _availableTimes.FirstOrDefault(),
+        };
+        _createdBooking = null;
+        _submitted = false;
+        _errorMessage = null;
+    }
+
+    // ----------------------------------------------------------------
+    // Date + time dropdowns
+    // ----------------------------------------------------------------
+    private static List<DateOnly> BuildAvailableDates()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var dates = new List<DateOnly>();
+
+        // Start tomorrow, look ahead 60 days.
+        for (var i = 1; i <= 60; i++)
+        {
+            var date = today.AddDays(i);
+
+            // Skip Sundays — most studios are closed. Studio can edit this later.
+            if (date.DayOfWeek == DayOfWeek.Sunday) continue;
+
+            dates.Add(date);
+        }
+
+        return dates;
+    }
+
+    private static List<TimeOnly> BuildAvailableTimes()
+    {
+        // 10:00 to 17:00, every 30 minutes.
+        var times = new List<TimeOnly>();
+        var start = new TimeOnly(10, 0);
+        var end = new TimeOnly(17, 0);
+
+        for (var t = start; t <= end; t = t.AddMinutes(30))
+        {
+            times.Add(t);
+        }
+
+        return times;
+    }
+
+    /// <summary>
+    /// Form-shaped model with validation attributes. Kept local to the form
+    /// so the DTO/entity stays free of validation specifics.
+    /// </summary>
+    public class BookingFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please enter your name.")]
+        [System.ComponentModel.DataAnnotations.StringLength(120)]
+        public string ClientName { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please enter your email.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string ClientEmail { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.StringLength(40)]
+        public string? ClientPhone { get; set; }
+
+        public int? ArtistId { get; set; }
+
+        public int? ServiceId { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public DateOnly PreferredDate { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public TimeOnly PreferredTime { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please tell us about your idea.")]
+        [System.ComponentModel.DataAnnotations.StringLength(4000, MinimumLength = 10,
+            ErrorMessage = "Please tell us a bit more — at least 10 characters.")]
+        public string Description { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,66 @@
+@page "/book"
+@rendermode InteractiveServer
+
+@inject ISiteSettingService SiteSettings
+
+<PageTitle>Book an Appointment — Inkrepublik Tattoo Studio</PageTitle>
+
+<section class="book-hero">
+    <div class="container">
+        <OrnamentalDivider Label="Book a Session" />
+        <h1 class="book-title">Request an Appointment</h1>
+        <p class="book-lead">
+            Fill in the form below and we'll be in touch within 24 hours to
+            confirm the details. Consultations are free, and always the first
+            step for any larger piece.
+        </p>
+    </div>
+</section>
+
+<section class="book-section">
+    <div class="container book-container">
+        <div class="book-sidebar">
+            <div class="book-sidebar-block">
+                <h3 class="book-sidebar-title">What happens next</h3>
+                <ol class="book-steps">
+                    <li>You submit this form</li>
+                    <li>We review your request</li>
+                    <li>You get an email within 24 hours to confirm the details</li>
+                    <li>We see you at the studio</li>
+                </ol>
+            </div>
+
+            <div class="book-sidebar-block">
+                <h3 class="book-sidebar-title">Need to change your booking?</h3>
+                <p class="book-sidebar-text">
+                    Every request includes a link in your email to view, reschedule,
+                    or cancel — no account needed.
+                </p>
+            </div>
+
+            <div class="book-sidebar-block">
+                <h3 class="book-sidebar-title">Not sure what you want?</h3>
+                <p class="book-sidebar-text">
+                    Book a consultation instead — describe your rough idea, and
+                    we'll help shape it.
+                </p>
+            </div>
+        </div>
+
+        <div class="book-form-wrapper">
+            <BookingForm PrefillArtistId="_prefillArtistId" />
+        </div>
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "artistId")]
+    public int? ArtistId { get; set; }
+
+    private int? _prefillArtistId;
+
+    protected override void OnParametersSet()
+    {
+        _prefillArtistId = ArtistId;
+    }
+}
