@@ -314,13 +314,13 @@ The project is being developed incrementally.
 
 ### Phase 3 — Public Marketing Site
 
-* [ ] Studio homepage
-* [ ] About section
-* [ ] Tattoo artist profiles
-* [ ] Portfolio/gallery
-* [ ] Services
-* [ ] Contact information
-* [ ] Responsive design
+* [x] 3A — Design system
+* [x] 3B — Layout shell (header, footer)
+* [x] 3C — Home page
+* [x] 3D — Artists listing + detail
+* [x] 3E — Services page
+* [x] 3F — Gallery + Reviews
+* [x] 3G — Contact page
 
 ### Phase 4 — Booking Request Flow
 
@@ -373,3 +373,15 @@ The project is being developed incrementally.
 * [ ] Configure production email
 * [ ] Final testing
 * [ ] Studio handover
+
+
+## Future features (post-handover)
+
+- **Facebook Graph API gallery sync** — pull the studio's Facebook Page photos
+  periodically and display them in the gallery. Requires:
+  - Facebook App + Business Manager setup on the studio's side
+  - Long-lived Page Access Token (System User)
+  - A background worker (`IHostedService`) to fetch + download images
+  - Object storage for downloaded images (Render disk is ephemeral)
+  - Manual artist-tagging on synced images
+  Architecture: new `SiteGalleryImage` entity, decoupled from `ArtistImage`.

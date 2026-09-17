@@ -18,7 +18,9 @@
         <nav class="nav-desktop">
             @foreach (var link in NavLinks)
             {
-                <a href="@link.Href" class="nav-link">@link.Label</a>
+                <NavLink href="@link.Href" class="nav-link" Match="NavLinkMatch.Prefix">
+                    @link.Label
+                </NavLink>
             }
         </nav>
 
@@ -52,12 +54,14 @@
     @if (_mobileOpen)
     {
         <div class="mobile-menu">
-            <nav class="mobile-nav">
-                @foreach (var link in NavLinks)
-                {
-                    <a href="@link.Href" class="nav-link" @onclick="CloseMobileMenu">@link.Label</a>
-                }
-            </nav>
+                <nav class="mobile-nav">
+                    @foreach (var link in NavLinks)
+                    {
+                        <NavLink href="@link.Href" class="nav-link" Match="NavLinkMatch.Prefix" @onclick="CloseMobileMenu">
+                            @link.Label
+                        </NavLink>
+                    }
+                </nav>
             <a href="/book" class="btn btn-primary mobile-cta" @onclick="CloseMobileMenu">Book Now</a>
         </div>
     }

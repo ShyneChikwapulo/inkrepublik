@@ -5,6 +5,7 @@ using Inkrepublik.Services.Artists;
 using Inkrepublik.Services.Services;
 using Inkrepublik.Services.Reviews;
 using Inkrepublik.Services.SiteSettings;
+using Inkrepublik.Services.Contact;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +30,8 @@ builder.Services.AddDbContextFactory<InkrepublikDbContext>(options =>
 builder.Services.AddScoped<IArtistService, ArtistService>();
 builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<ISiteSettingService, SiteSettingService>();    
+builder.Services.AddScoped<ISiteSettingService, SiteSettingService>();   
+builder.Services.AddScoped<IContactService, ContactService>(); 
 
 // ------------------------------------------------------------
 // Blazor

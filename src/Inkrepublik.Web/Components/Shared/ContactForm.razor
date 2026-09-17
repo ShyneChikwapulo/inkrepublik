@@ -1,0 +1,140 @@
+@* =========================================================================
+   CONTACT FORM
+   Reusable form that saves a message to ContactMessages.
+   Used full-size on /contact and as a home page preview.
+   ========================================================================= *@
+
+@inject IContactService ContactService
+
+@if (_submitted)
+{
+    <div class="form-success">
+        <h3 class="form-success-title">Message received</h3>
+        <p class="form-success-text">
+            Thanks, @_model.Name. We'll be in touch within 24 hours.
+        </p>
+        <button class="btn btn-ghost" @onclick="ResetForm">Send another message</button>
+    </div>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit" FormName="contact">
+        <DataAnnotationsValidator />
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="form-label" for="contact-name">Name</label>
+                <InputText id="contact-name" class="form-control" @bind-Value="_model.Name" placeholder="Your name" />
+                <ValidationMessage For="() => _model.Name" />
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="contact-email">Email</label>
+                <InputText id="contact-email" type="email" class="form-control" @bind-Value="_model.Email" placeholder="your@email.com" />
+                <ValidationMessage For="() => _model.Email" />
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label class="form-label" for="contact-phone">Phone (optional)</label>
+            <InputText id="contact-phone" class="form-control" @bind-Value="_model.Phone" placeholder="+27 00 000 0000" />
+            <ValidationMessage For="() => _model.Phone" />
+        </div>
+
+        <div class="form-field">
+            <label class="form-label" for="contact-subject">Subject</label>
+            <InputText id="contact-subject" class="form-control" @bind-Value="_model.Subject" placeholder="What's this about?" />
+            <ValidationMessage For="() => _model.Subject" />
+        </div>
+
+        <div class="form-field">
+            <label class="form-label" for="contact-message">Message</label>
+            <InputTextArea id="contact-message" class="form-control" @bind-Value="_model.Message" rows="5"
+                           placeholder="Tell us what you need..." />
+            <ValidationMessage For="() => _model.Message" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <p class="form-error">@_errorMessage</p>
+        }
+
+        <button type="submit" class="btn btn-primary form-submit" disabled="@_submitting">
+            @(_submitting ? "Sending…" : "Send Message")
+        </button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public bool Compact { get; set; }
+
+    private ContactFormModel _model = new();
+    private bool _submitting;
+    private bool _submitted;
+    private string? _errorMessage;
+
+    private async Task HandleSubmit()
+    {
+        _submitting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var message = new ContactMessage
+            {
+                Name = _model.Name.Trim(),
+                Email = _model.Email.Trim(),
+                Phone = string.IsNullOrWhiteSpace(_model.Phone) ? null : _model.Phone.Trim(),
+                Subject = _model.Subject.Trim(),
+                Message = _model.Message.Trim(),
+            };
+
+            await ContactService.SubmitAsync(message);
+            _submitted = true;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Something went wrong sending your message. Please try again.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        _model = new ContactFormModel();
+        _submitted = false;
+        _errorMessage = null;
+    }
+
+    /// <summary>
+    /// Form-shaped model with validation attributes. Kept local to the form
+    /// so the entity stays a pure data class.
+    /// </summary>
+    public class ContactFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please enter your name.")]
+        [System.ComponentModel.DataAnnotations.StringLength(120)]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please enter your email.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.StringLength(40)]
+        public string? Phone { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please enter a subject.")]
+        [System.ComponentModel.DataAnnotations.StringLength(200)]
+        public string Subject { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please enter your message.")]
+        [System.ComponentModel.DataAnnotations.StringLength(4000, MinimumLength = 10,
+            ErrorMessage = "Your message should be at least 10 characters.")]
+        public string Message { get; set; } = string.Empty;
+    }
+}
