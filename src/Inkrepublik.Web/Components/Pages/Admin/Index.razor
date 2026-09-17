@@ -1,6 +1,7 @@
 @page "/admin"
 @layout AdminLayout
 @attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @inject IAdminDashboardService DashboardService
 @inject IAdminBookingService BookingService

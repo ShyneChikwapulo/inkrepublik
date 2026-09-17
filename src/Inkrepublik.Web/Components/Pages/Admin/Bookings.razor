@@ -1,6 +1,7 @@
 @page "/admin/bookings"
 @layout AdminLayout
 @attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using Inkrepublik.Domain.Enums
 @inject IAdminBookingService BookingService
@@ -15,19 +16,19 @@
 
 <!-- Filters -->
 <div class="filters-bar">
-    <div class="filter-group">
-        <button class="filter-btn @(_statusFilter is null ? "is-active" : "")"
-                @onclick="() => SetStatus(null)">
-            All
-        </button>
-        @foreach (var status in FilterStatuses)
-        {
-            <button class="filter-btn @(_statusFilter == status ? "is-active" : "")"
-                    @onclick="() => SetStatus(status)">
-                @status
+        <div class="filter-group">
+            <button class="filter-btn @(GetFilterClass(null))"
+                    @onclick="() => SetStatus(null)">
+                All
             </button>
-        }
-    </div>
+            @foreach (var status in FilterStatuses)
+            {
+                <button class="filter-btn @(GetFilterClass(status))"
+                        @onclick="() => SetStatus(status)">
+                    @status
+                </button>
+            }
+        </div>
 
     <div class="filter-search">
         <input type="text"
@@ -184,4 +185,6 @@ else
             _loading = false;
         }
     }
+    private string GetFilterClass(BookingStatus? status)
+    => _statusFilter == status ? "is-active" : string.Empty;
 }
