@@ -1,0 +1,87 @@
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-grid">
+            <!-- Brand column -->
+            <div class="footer-brand">
+                <div class="footer-brand-logo">
+                    <img src="images/brand/inkrepublik-logo.png"
+                         alt="Inkrepublik Tattoo Studio"
+                         class="footer-logo-img" />
+                    <span class="footer-logo-text">
+                        Ink<br /><span class="footer-logo-accent">Republik</span>
+                    </span>
+                </div>
+                <p class="footer-brand-blurb">
+                    Tattoo Studio. Hout Bay, Cape Town.<br />
+                    Custom work by artists who care.
+                </p>
+                <div class="footer-social">
+                    <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                            <circle cx="12" cy="12" r="4" />
+                            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                        </svg>
+                    </a>
+                    <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick links -->
+            <div class="footer-column">
+                <p class="footer-heading">Quick Links</p>
+                <ul class="footer-links">
+                    @foreach (var link in NavLinks)
+                    {
+                        <li><a href="@link.Href">@link.Label</a></li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Hours -->
+            <div class="footer-column">
+                <p class="footer-heading">Studio Hours</p>
+                <div class="footer-hours">
+                    @foreach (var row in Hours)
+                    {
+                        <div class="footer-hours-row">
+                            <span class="footer-hours-day">@row.Day</span>
+                            <span class="footer-hours-time @(row.Closed ? "is-closed" : "")">@row.Time</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom bar -->
+        <div class="footer-bottom">
+            <p>© @DateTime.UtcNow.Year Inkrepublik Tattoo Studio. All rights reserved.</p>
+            <p>Crafted with intention.</p>
+        </div>
+    </div>
+</footer>
+
+@code {
+    private record NavLink(string Label, string Href);
+    private record HourRow(string Day, string Time, bool Closed = false);
+
+    private static readonly NavLink[] NavLinks =
+    [
+        new("Artists",  "/artists"),
+        new("Services", "/services"),
+        new("Reviews",  "/reviews"),
+        new("Gallery",  "/gallery"),
+        new("Contact",  "/contact"),
+    ];
+
+    private static readonly HourRow[] Hours =
+    [
+        new("Tue – Fri", "10:00 – 19:00"),
+        new("Saturday",  "10:00 – 17:00"),
+        new("Sun & Mon", "Closed", Closed: true),
+    ];
+}

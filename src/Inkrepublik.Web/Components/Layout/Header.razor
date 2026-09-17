@@ -1,0 +1,111 @@
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+@rendermode InteractiveServer
+
+<header @ref="_headerRef" class="site-header">
+    <div class="header-inner">
+        <!-- Logo -->
+        <a href="/" class="logo">
+            <img src="images/brand/inkrepublik-logo.png"
+                 alt="Inkrepublik Tattoo Studio"
+                 class="logo-img" />
+            <span class="logo-text">
+                Ink<br /><span class="logo-text-accent">Republik</span>
+            </span>
+        </a>
+
+        <!-- Desktop nav -->
+        <nav class="nav-desktop">
+            @foreach (var link in NavLinks)
+            {
+                <a href="@link.Href" class="nav-link">@link.Label</a>
+            }
+        </nav>
+
+        <!-- Book Now CTA (desktop) -->
+        <a href="/book" class="btn btn-primary nav-cta">Book Now</a>
+
+        <!-- Hamburger (mobile) -->
+        <button class="hamburger"
+                @onclick="ToggleMobileMenu"
+                aria-label="Toggle menu"
+                aria-expanded="@_mobileOpen">
+            @if (_mobileOpen)
+            {
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            }
+            else
+            {
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="3" y1="7" x2="21" y2="7" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="17" x2="21" y2="17" />
+                </svg>
+            }
+        </button>
+    </div>
+
+    <!-- Mobile menu -->
+    @if (_mobileOpen)
+    {
+        <div class="mobile-menu">
+            <nav class="mobile-nav">
+                @foreach (var link in NavLinks)
+                {
+                    <a href="@link.Href" class="nav-link" @onclick="CloseMobileMenu">@link.Label</a>
+                }
+            </nav>
+            <a href="/book" class="btn btn-primary mobile-cta" @onclick="CloseMobileMenu">Book Now</a>
+        </div>
+    }
+</header>
+
+@code {
+    private bool _mobileOpen;
+    private ElementReference _headerRef;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _cleanup;
+
+    private record NavLink(string Label, string Href);
+
+    private static readonly NavLink[] NavLinks =
+    [
+        new("Artists",  "/artists"),
+        new("Services", "/services"),
+        new("Reviews",  "/reviews"),
+        new("Gallery",  "/gallery"),
+        new("Contact",  "/contact"),
+    ];
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _module = await JS.InvokeAsync<IJSObjectReference>(
+            "import", "./js/site.js");
+
+        _cleanup = await _module.InvokeAsync<IJSObjectReference>(
+            "initScrollToggle",
+            _headerRef,
+            "site-header--scrolled");
+    }
+
+    private void ToggleMobileMenu() => _mobileOpen = !_mobileOpen;
+
+    private void CloseMobileMenu() => _mobileOpen = false;
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_cleanup is not null) await _cleanup.InvokeVoidAsync("invoke");
+            if (_module is not null) await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { /* page navigated away */ }
+    }
+}
