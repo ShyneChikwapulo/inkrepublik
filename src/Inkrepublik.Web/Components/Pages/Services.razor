@@ -1,0 +1,109 @@
+@page "/services"
+@rendermode InteractiveServer
+
+@inject IServiceCatalogService ServiceCatalog
+
+<PageTitle>Services & Pricing — Inkrepublik Tattoo Studio</PageTitle>
+
+<section class="page-hero">
+    <div class="container">
+        <OrnamentalDivider Label="What We Offer" />
+        <h1 class="page-title">Services & Pricing</h1>
+        <p class="page-lead">
+            Every tattoo is custom-quoted — the pieces below are a guide, not a
+            fixed menu. Consultations are free, and always the first step for
+            any larger piece.
+        </p>
+    </div>
+</section>
+
+@if (_loading)
+{
+    <section class="services-loading">
+        <div class="container">
+            <p class="loading">Loading services…</p>
+        </div>
+    </section>
+}
+else if (_services.Count == 0)
+{
+    <section class="services-loading">
+        <div class="container">
+            <p class="empty-state">No services to display yet.</p>
+        </div>
+    </section>
+}
+else
+{
+    @foreach (var group in _grouped)
+    {
+        <section class="category-section">
+            <div class="container">
+                <header class="category-header">
+                    <h2 class="category-title">@group.Title</h2>
+                    <p class="category-desc">@group.Description</p>
+                </header>
+
+                <div class="category-list">
+                    @foreach (var service in group.Services)
+                    {
+                        <ServiceItem Service="service" />
+                    }
+                </div>
+            </div>
+        </section>
+    }
+}
+
+<section class="services-cta">
+    <div class="container">
+        <h2 class="cta-title">Not sure where to start?</h2>
+        <p class="cta-text">
+            Book a free consultation. We'll talk through your idea, placement,
+            and budget — with zero obligation.
+        </p>
+        <a href="/book" class="btn btn-primary">Book a Consultation</a>
+    </div>
+</section>
+@code {
+    private List<Service> _services = [];
+    private List<CategoryGroup> _grouped = [];
+    private bool _loading = true;
+
+    private record CategoryGroup(string Title, string Description, List<Service> Services);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _services = await ServiceCatalog.GetActiveServicesAsync();
+        _grouped = BuildGroups(_services);
+        _loading = false;
+    }
+
+    private static List<CategoryGroup> BuildGroups(List<Service> services)
+    {
+        // Explicit List<CategoryGroup> gives the collection expression a target type.
+        // Then we filter out empty categories and copy to a new list.
+        List<CategoryGroup> allGroups =
+        [
+            new("Custom Tattoos",
+                "From small script to full sleeves — everything is drawn from scratch for you.",
+                services.Where(s => s.Category == ServiceCategory.Tattoo).ToList()),
+
+            new("Piercing",
+                "Ear curation, body piercing, and starter jewellery. By appointment only.",
+                services.Where(s => s.Category == ServiceCategory.Piercing).ToList()),
+
+            new("Jewellery",
+                "Swap, upgrade, or refresh. Includes sterilisation and fitting.",
+                services.Where(s => s.Category == ServiceCategory.Jewelry).ToList()),
+
+            new("Consultations",
+                "Free, no-commitment sessions to plan your piece with an artist.",
+                services.Where(s => s.Category == ServiceCategory.Consultation).ToList()),
+        ];
+
+        return allGroups
+            .Where(g => g.Services.Count > 0)
+            .ToList();
+    }
+}

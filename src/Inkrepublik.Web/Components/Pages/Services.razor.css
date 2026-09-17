@@ -1,0 +1,106 @@
+/* ============================================================================
+   SERVICES PAGE
+   ============================================================================ */
+
+.page-hero {
+    padding: 6rem 0 4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--c-border-subtle);
+}
+
+.page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+}
+
+.page-lead {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--c-text-muted);
+    font-weight: 300;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+/* ---------- Category sections ---------- */
+.category-section {
+    padding: 4rem 0;
+}
+
+.category-section + .category-section {
+    border-top: 1px solid var(--c-border-subtle);
+}
+
+.category-header {
+    max-width: 620px;
+    margin-bottom: 2.5rem;
+}
+
+.category-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.category-desc {
+    font-size: 0.95rem;
+    color: var(--c-text-dim);
+    font-weight: 300;
+    line-height: 1.7;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-width: 900px;
+}
+
+/* ---------- Loading / empty ---------- */
+.services-loading {
+    padding: 6rem 0;
+    text-align: center;
+}
+
+.loading,
+.empty-state {
+    color: var(--c-text-dim);
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+/* ---------- Bottom CTA ---------- */
+.services-cta {
+    padding: var(--space-4xl) 0;
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-border-subtle);
+    text-align: center;
+}
+
+.cta-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 1rem;
+}
+
+.cta-text {
+    font-size: 0.95rem;
+    color: var(--c-text-muted);
+    font-weight: 300;
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.7;
+}

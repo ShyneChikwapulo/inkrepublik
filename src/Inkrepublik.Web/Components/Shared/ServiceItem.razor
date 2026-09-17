@@ -1,0 +1,47 @@
+@* =========================================================================
+   SERVICE ITEM
+   A single row in the services list — name, description, price on the right.
+   Left accent border that highlights on hover.
+   ========================================================================= *@
+
+<div class="service-item">
+    <div class="service-head">
+        <h3 class="service-title">@Service.Name</h3>
+        @if (!string.IsNullOrWhiteSpace(PriceText))
+        {
+            <span class="service-price">@PriceText</span>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Service.Description))
+    {
+        <p class="service-desc">@Service.Description</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Service Service { get; set; } = default!;
+
+    /// <summary>
+    /// Formats the price range for display.
+    ///   null From + null To       → "" (no price shown)
+    ///   0 From                    → "Free" (consultations)
+    ///   From only                 → "From R600"
+    ///   From + To                 → "R600 – R1,500"
+    /// </summary>
+    private string PriceText
+    {
+        get
+        {
+            var from = Service.PriceFrom;
+            var to = Service.PriceTo;
+
+            if (from is null) return string.Empty;
+            if (from == 0m) return "Free";
+
+            if (to is not null && to != from)
+                return $"R{from:N0} – R{to:N0}";
+
+            return $"From R{from:N0}";
+        }
+    }
+}

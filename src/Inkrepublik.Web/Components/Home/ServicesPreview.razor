@@ -1,0 +1,54 @@
+@* =========================================================================
+   SERVICES PREVIEW (home)
+   The first 4 active services, pulled from the database.
+   ========================================================================= *@
+
+@inject IServiceCatalogService ServiceCatalog
+
+<section class="services-preview">
+    <div class="container">
+        <div class="services-preview-grid">
+            <div class="services-preview-intro">
+                <OrnamentalDivider Label="What We Offer" />
+                <h2 class="services-preview-title">
+                    Every Style.<br />Every Scale.
+                </h2>
+                <p class="services-preview-lead">
+                    From a first-time piece to a full-body commitment — Inkrepublik
+                    covers every scope. Our artists adapt to any style and every
+                    level of experience.
+                </p>
+                <a href="/services" class="link-gold">View All Services</a>
+            </div>
+
+            <div class="services-preview-list">
+                @if (_loading)
+                {
+                    <p class="loading">Loading services…</p>
+                }
+                else if (_services.Count == 0)
+                {
+                    <p class="empty-state">No services to display yet.</p>
+                }
+                else
+                {
+                    @foreach (var service in _services)
+                    {
+                        <ServiceItem Service="service" />
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private List<Service> _services = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _services = await ServiceCatalog.GetFeaturedServicesAsync(4);
+        _loading = false;
+    }
+}

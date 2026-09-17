@@ -1,0 +1,48 @@
+/* ============================================================================
+   SERVICE ITEM
+   ============================================================================ */
+
+.service-item {
+    padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    border-left: 2px solid var(--c-surface-2);
+    transition: border-color var(--transition-base),
+                background var(--transition-base);
+}
+
+.service-item:hover {
+    border-left-color: var(--c-crimson);
+    background: rgba(139, 26, 26, 0.06);
+}
+
+.service-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.service-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--c-text);
+    margin: 0;
+}
+
+.service-price {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--c-crimson);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.service-desc {
+    font-size: 0.82rem;
+    color: var(--c-text-dim);
+    line-height: 1.6;
+    font-weight: 300;
+    margin: 0;
+}
