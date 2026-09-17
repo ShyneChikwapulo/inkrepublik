@@ -1,0 +1,281 @@
+@page "/admin/services/new"
+@page "/admin/services/{Id:int}"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@using Inkrepublik.Domain.Enums
+@inject IAdminServiceCatalogService ServiceAdmin
+@inject NavigationManager Nav
+
+<PageTitle>@(IsNew ? "New Service" : $"Edit Service") — Inkrepublik Admin</PageTitle>
+
+<p class="admin-breadcrumb">
+    <a href="/admin/services">Services</a>
+    <span class="admin-breadcrumb-sep">/</span>
+    <span>@(IsNew ? "New" : $"#{Id}")</span>
+</p>
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@(IsNew ? "New Service" : "Edit Service")</h1>
+</div>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading…</p>
+}
+else if (!IsNew && !_exists)
+{
+    <div class="admin-empty">
+        <p class="admin-empty-title">Service not found</p>
+        <a href="/admin/services" class="btn btn-ghost" style="margin-top: 1.5rem;">← Back to services</a>
+    </div>
+}
+else
+{
+    <EditForm Model="_form" OnValidSubmit="HandleSave" FormName="service-edit">
+        <DataAnnotationsValidator />
+
+        <div class="form-layout">
+            <div class="form-main">
+                <div class="form-field">
+                    <label class="form-label" for="svc-name">Name *</label>
+                    <InputText id="svc-name" class="form-control" @bind-Value="_form.Name"
+                               placeholder="e.g. Small Tattoo" />
+                    <ValidationMessage For="() => _form.Name" />
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label" for="svc-desc">Description</label>
+                    <InputTextArea id="svc-desc" class="form-control" rows="4"
+                                   @bind-Value="_form.Description"
+                                   placeholder="What this service includes…" />
+                    <ValidationMessage For="() => _form.Description" />
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label class="form-label" for="svc-category">Category *</label>
+                        <InputSelect id="svc-category" class="form-control" @bind-Value="_form.Category">
+                            @foreach (var category in Enum.GetValues<ServiceCategory>())
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="svc-order">Display order</label>
+                        <InputNumber id="svc-order" class="form-control" @bind-Value="_form.DisplayOrder" />
+                        <p class="form-hint">Lower numbers appear first.</p>
+                    </div>
+                </div>
+
+                <h2 class="form-section-title">Pricing</h2>
+
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label class="form-label" for="svc-price-from">Price from (R)</label>
+                        <InputNumber id="svc-price-from" class="form-control"
+                                     @bind-Value="_form.PriceFrom"
+                                     placeholder="Leave empty for 'Enquire'" />
+                        <p class="form-hint">Set to 0 for free (e.g. consultations).</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="svc-price-to">Price to (R)</label>
+                        <InputNumber id="svc-price-to" class="form-control"
+                                     @bind-Value="_form.PriceTo"
+                                     placeholder="Optional" />
+                        <p class="form-hint">Leave empty for "from R___ upwards".</p>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-label" for="svc-duration">Typical duration (minutes)</label>
+                    <InputNumber id="svc-duration" class="form-control"
+                                 @bind-Value="_form.TypicalDurationMinutes"
+                                 placeholder="e.g. 60" />
+                </div>
+
+                <div class="form-field">
+                    <label class="form-checkbox">
+                        <InputCheckbox @bind-Value="_form.IsActive" />
+                        <span>Active (shown on the public site)</span>
+                    </label>
+                </div>
+            </div>
+
+            <aside class="form-sidebar">
+                <div class="form-preview">
+                    <p class="form-preview-title">Preview</p>
+                    <div class="service-item-preview">
+                        <div class="preview-head">
+                            <span class="preview-name">@(string.IsNullOrWhiteSpace(_form.Name) ? "Service name" : _form.Name)</span>
+                            <span class="preview-price">@PreviewPrice</span>
+                        </div>
+                        <p class="preview-desc">@(string.IsNullOrWhiteSpace(_form.Description) ? "Description will appear here…" : _form.Description)</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <p class="form-error">@_errorMessage</p>
+        }
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" disabled="@_saving">
+                @(_saving ? "Saving…" : (IsNew ? "Create Service" : "Save Changes"))
+            </button>
+            <a href="/admin/services" class="btn btn-ghost">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private ServiceForm _form = new();
+    private bool _loading = true;
+    private bool _saving;
+    private bool _exists = true;
+    private string? _errorMessage;
+
+    private bool IsNew => !Id.HasValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+
+        if (IsNew)
+        {
+            _form = new ServiceForm
+            {
+                DisplayOrder = 100,
+                IsActive = true,
+                Category = ServiceCategory.Tattoo,
+            };
+        }
+        else
+        {
+            var service = await ServiceAdmin.GetByIdAsync(Id!.Value);
+            if (service is null)
+            {
+                _exists = false;
+            }
+            else
+            {
+                _form = ServiceForm.FromEntity(service);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task HandleSave()
+    {
+        _saving = true;
+        _errorMessage = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var entity = _form.ToEntity();
+                var created = await ServiceAdmin.CreateAsync(entity);
+                Nav.NavigateTo($"/admin/services/{created.Id}");
+            }
+            else
+            {
+                var entity = _form.ToEntity();
+                entity.Id = Id!.Value;
+                var ok = await ServiceAdmin.UpdateAsync(entity);
+
+                if (!ok)
+                {
+                    _errorMessage = "Couldn't save changes.";
+                    return;
+                }
+
+                Nav.NavigateTo("/admin/services");
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Something went wrong saving the service.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private string PreviewPrice
+    {
+        get
+        {
+            if (_form.PriceFrom is null) return "Enquire";
+            if (_form.PriceFrom == 0m) return "Free";
+            if (_form.PriceTo is not null && _form.PriceTo != _form.PriceFrom)
+                return $"R{_form.PriceFrom:N0} – R{_form.PriceTo:N0}";
+            return $"From R{_form.PriceFrom:N0}";
+        }
+    }
+
+    /// <summary>
+    /// Form-shaped model. Validates independently of the entity.
+    /// </summary>
+    public class ServiceForm
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(160)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(2000)]
+        public string? Description { get; set; }
+
+        [Required]
+        public ServiceCategory Category { get; set; }
+
+        [Range(0, 1_000_000, ErrorMessage = "Price must be zero or positive.")]
+        public decimal? PriceFrom { get; set; }
+
+        [Range(0, 1_000_000, ErrorMessage = "Price must be zero or positive.")]
+        public decimal? PriceTo { get; set; }
+
+        [Range(0, 1440, ErrorMessage = "Duration must be between 0 and 1440 minutes.")]
+        public int? TypicalDurationMinutes { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        public int DisplayOrder { get; set; }
+
+        public static ServiceForm FromEntity(Service s) => new()
+        {
+            Name = s.Name,
+            Description = s.Description,
+            Category = s.Category,
+            PriceFrom = s.PriceFrom,
+            PriceTo = s.PriceTo,
+            TypicalDurationMinutes = s.TypicalDurationMinutes,
+            IsActive = s.IsActive,
+            DisplayOrder = s.DisplayOrder,
+        };
+
+        public Service ToEntity() => new()
+        {
+            Name = Name.Trim(),
+            Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim(),
+            Category = Category,
+            PriceFrom = PriceFrom,
+            PriceTo = PriceTo,
+            TypicalDurationMinutes = TypicalDurationMinutes,
+            IsActive = IsActive,
+            DisplayOrder = DisplayOrder,
+        };
+    }
+}

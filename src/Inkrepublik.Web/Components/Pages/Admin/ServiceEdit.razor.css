@@ -1,0 +1,213 @@
+/* ============================================================================
+   ADMIN SERVICE EDIT / CREATE
+   ============================================================================ */
+
+.admin-breadcrumb {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-text-faint);
+    margin-bottom: 1.5rem;
+}
+
+.admin-breadcrumb a {
+    color: var(--c-text-dim);
+    transition: color var(--transition-fast);
+}
+
+.admin-breadcrumb a:hover {
+    color: var(--c-gold);
+}
+
+.admin-breadcrumb-sep {
+    margin: 0 0.5rem;
+}
+
+.admin-page-header {
+    margin-bottom: 2rem;
+}
+
+.admin-page-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--c-text);
+    letter-spacing: -0.01em;
+}
+
+.admin-loading {
+    color: var(--c-text-dim);
+    padding: 3rem 0;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.admin-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+}
+
+.admin-empty-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+/* ---------- Form layout ---------- */
+.form-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.form-main {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+    padding: 2rem;
+}
+
+.form-sidebar {
+    position: sticky;
+    top: 1.5rem;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-section-title {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-crimson);
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--c-border-subtle);
+    margin: 1.5rem 0 1rem;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--c-text-faint);
+    font-weight: 300;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--c-text-muted);
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--c-crimson);
+    cursor: pointer;
+}
+
+/* ---------- Preview ---------- */
+.form-preview {
+    background: var(--c-surface-3);
+    border: 1px solid var(--c-border-subtle);
+    padding: 1.5rem;
+}
+
+.form-preview-title {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-text-faint);
+    margin-bottom: 1rem;
+}
+
+.service-item-preview {
+    padding: 1rem 1rem 1rem 1.25rem;
+    border-left: 2px solid var(--c-crimson);
+    background: var(--c-surface);
+}
+
+.preview-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+}
+
+.preview-name {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--c-text);
+}
+
+.preview-price {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--c-crimson);
+    white-space: nowrap;
+}
+
+.preview-desc {
+    font-size: 0.8rem;
+    color: var(--c-text-dim);
+    line-height: 1.55;
+    font-weight: 300;
+}
+
+/* ---------- Actions ---------- */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--c-border-subtle);
+}
+
+.form-error {
+    color: var(--c-crimson-light);
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(176, 32, 32, 0.4);
+    background: rgba(176, 32, 32, 0.08);
+    margin-top: 1.5rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+    .form-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .form-sidebar {
+        position: static;
+    }
+
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}

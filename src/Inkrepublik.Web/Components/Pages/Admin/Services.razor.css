@@ -1,0 +1,214 @@
+/* ============================================================================
+   ADMIN SERVICES
+   ============================================================================ */
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.admin-page-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.admin-page-lead {
+    font-size: 0.95rem;
+    color: var(--c-text-muted);
+    font-weight: 300;
+}
+
+.admin-loading {
+    color: var(--c-text-dim);
+    padding: 3rem 0;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+/* ---------- Message ---------- */
+.action-message {
+    padding: 0.9rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    border: 1px solid;
+}
+
+.action-message--success {
+    color: #6fc27c;
+    border-color: rgba(111, 194, 124, 0.4);
+    background: rgba(111, 194, 124, 0.08);
+}
+
+.action-message--error {
+    color: var(--c-crimson-light);
+    border-color: rgba(176, 32, 32, 0.4);
+    background: rgba(176, 32, 32, 0.08);
+}
+
+/* ---------- Empty ---------- */
+.admin-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+}
+
+.admin-empty-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.admin-empty-text {
+    font-size: 0.9rem;
+    color: var(--c-text-faint);
+    font-weight: 300;
+}
+
+/* ---------- Table ---------- */
+.admin-table-wrap {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table thead {
+    border-bottom: 1px solid var(--c-border-subtle);
+}
+
+.admin-table th {
+    text-align: left;
+    padding: 0.9rem 1.25rem;
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-text-faint);
+    background: var(--c-surface-3);
+}
+
+.admin-table td {
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+    color: var(--c-text-muted);
+    border-bottom: 1px solid var(--c-border-subtle);
+    vertical-align: middle;
+}
+
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.row-inactive {
+    opacity: 0.55;
+}
+
+.cell-order {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    color: var(--c-text-faint);
+    text-align: center;
+    width: 60px;
+}
+
+.cell-strong {
+    display: block;
+    font-weight: 500;
+    color: var(--c-text);
+    margin-bottom: 0.15rem;
+}
+
+.cell-muted {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--c-text-faint);
+}
+
+.cell-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.cell-link {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    transition: color var(--transition-fast);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0.5rem;
+}
+
+.cell-link:hover {
+    color: var(--c-gold-light);
+}
+
+.cell-link--danger {
+    color: var(--c-crimson-light);
+}
+
+.cell-link--danger:hover {
+    color: #e64a4a;
+}
+
+.cell-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---------- Status pills ---------- */
+.status-pill {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid;
+}
+
+.status-pill--confirmed {
+    color: #6fc27c;
+    border-color: #6fc27c;
+}
+
+.status-pill--completed {
+    color: var(--c-text-muted);
+    border-color: var(--c-text-muted);
+}
+
+/* ---------- Footer ---------- */
+.table-footer {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--c-text-faint);
+    text-align: right;
+    font-weight: 300;
+}
