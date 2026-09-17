@@ -1,60 +1,376 @@
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+/* ============================================================================
+   INKREPUBLIK TATTOO STUDIO — DESIGN SYSTEM
+   ============================================================================
+   Global tokens, typography, element defaults, and shared utilities.
+   Component-specific styles live alongside their .razor files as .razor.css.
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   1. DESIGN TOKENS
+   ---------------------------------------------------------------------------- */
+:root {
+    /* Brand colours */
+    --c-crimson:        #8B1A1A;
+    --c-crimson-light:  #B02020;
+    --c-crimson-dark:   #6A1212;
+    --c-gold:           #c8b88a;
+    --c-gold-light:     #e0d4b0;
+
+    /* Surfaces */
+    --c-ink:            #0a0a0a;
+    --c-surface:        #111111;
+    --c-surface-2:      #1a1a1a;
+    --c-surface-3:      #080808;
+
+    /* Text */
+    --c-text:           #f0ebe0;
+    --c-text-muted:     #b0a898;
+    --c-text-dim:       #888880;
+    --c-text-faint:     #666660;
+
+    /* Borders */
+    --c-border:         rgba(139, 26, 26, 0.3);
+    --c-border-subtle:  rgba(139, 26, 26, 0.15);
+    --c-border-gold:    rgba(200, 184, 138, 0.4);
+    --c-border-ink:     rgba(255, 255, 255, 0.05);
+
+    /* Typography */
+    --font-display:     'Cinzel Decorative', serif;
+    --font-heading:     'Cinzel', serif;
+    --font-body:        'Raleway', sans-serif;
+
+    /* Font sizes (clamp = responsive without media queries) */
+    --fs-hero:          clamp(2.8rem, 6vw, 5.5rem);
+    --fs-h2:            clamp(2rem, 4vw, 3.2rem);
+    --fs-h3:            clamp(1.8rem, 3vw, 2.8rem);
+    --fs-eyebrow:       0.65rem;
+    --fs-nav:           0.8rem;
+    --fs-button:        0.75rem;
+    --fs-body:          1rem;
+    --fs-small:         0.85rem;
+
+    /* Spacing scale */
+    --space-xs:         0.25rem;
+    --space-sm:         0.5rem;
+    --space-md:         1rem;
+    --space-lg:         1.5rem;
+    --space-xl:         2rem;
+    --space-2xl:        3rem;
+    --space-3xl:        4rem;
+    --space-4xl:        7rem;
+
+    /* Layout */
+    --max-width:        1280px;
+    --header-height:    72px;
+
+    /* Motion */
+    --transition-fast:  0.2s ease;
+    --transition-base:  0.3s ease;
+    --transition-slow:  0.5s ease;
 }
 
-a, .btn-link {
-    color: #006bb7;
+/* ----------------------------------------------------------------------------
+   2. RESET & BASE
+   ---------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+    /* Keep anchor targets clear of the fixed header */
+    scroll-padding-top: var(--header-height);
+}
+
+body {
+    margin: 0;
+    background-color: var(--c-ink);
+    color: var(--c-text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* ----------------------------------------------------------------------------
+   3. TYPOGRAPHY
+   ---------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    color: var(--c-text);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+h1 {
+    font-family: var(--font-display);
+    font-size: var(--fs-hero);
+    letter-spacing: -0.01em;
+}
+
+h2 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    letter-spacing: -0.01em;
+}
+
+h3 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+}
+
+p {
+    margin: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   4. SCROLLBAR
+   ---------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--c-ink);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--c-crimson);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--c-crimson-light);
+}
+
+/* ----------------------------------------------------------------------------
+   5. SHARED UTILITIES
+   ---------------------------------------------------------------------------- */
+
+/* Container — the standard max-width wrapper for page sections */
+.container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--space-xl);
+}
+
+/* Ornamental section divider — thin lines fading in from each side */
+.ornament {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.ornament::before,
+.ornament::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--c-crimson), transparent);
+}
+
+/* Eyebrow text — small uppercase section labels */
+.eyebrow {
+    font-family: var(--font-heading);
+    font-size: var(--fs-eyebrow);
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--c-crimson);
+    white-space: nowrap;
+}
+
+/* Section title — the centered H2 used across the site */
+.section-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    text-align: center;
+    letter-spacing: -0.01em;
+}
+
+/* Body text variants */
+.text-muted { color: var(--c-text-muted); }
+.text-dim   { color: var(--c-text-dim); }
+.text-gold  { color: var(--c-gold); }
+.text-crimson { color: var(--c-crimson); }
+
+/* ----------------------------------------------------------------------------
+   6. BUTTONS
+   ---------------------------------------------------------------------------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 0.9rem 2rem;
+    font-family: var(--font-heading);
+    font-size: var(--fs-button);
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    transition: background var(--transition-fast),
+                border-color var(--transition-fast),
+                color var(--transition-fast);
+    cursor: pointer;
+}
+
+/* Solid crimson — the primary action */
 .btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background: var(--c-crimson);
+    color: var(--c-text);
+    border-color: var(--c-crimson);
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+.btn-primary:hover {
+    background: var(--c-crimson-light);
+    border-color: var(--c-crimson-light);
 }
 
-.content {
-    padding-top: 1.1rem;
+/* Gold outline — for secondary actions */
+.btn-ghost {
+    background: transparent;
+    color: var(--c-text);
+    border-color: var(--c-border-gold);
 }
 
-h1:focus {
+.btn-ghost:hover {
+    border-color: var(--c-gold);
+    color: var(--c-gold);
+}
+
+/* Ink solid — used on the crimson "about" band */
+.btn-ink {
+    background: var(--c-ink);
+    color: var(--c-text);
+    border-color: rgba(240, 235, 224, 0.3);
+}
+
+.btn-ink:hover {
+    background: var(--c-surface-2);
+}
+
+/* ----------------------------------------------------------------------------
+   7. FORM CONTROLS
+   ---------------------------------------------------------------------------- */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-label {
+    font-family: var(--font-heading);
+    font-size: var(--fs-eyebrow);
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+}
+
+.form-control {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
     outline: none;
+    width: 100%;
+    transition: border-color var(--transition-fast);
 }
 
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+.form-control:focus {
+    border-color: var(--c-crimson);
 }
 
-.invalid {
-    outline: 1px solid #e50000;
+.form-control::placeholder {
+    color: var(--c-text-faint);
 }
 
+textarea.form-control {
+    resize: vertical;
+    line-height: 1.6;
+    min-height: 120px;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+/* Blazor validation message (populated by EditForm + DataAnnotations) */
 .validation-message {
-    color: #e50000;
+    color: var(--c-crimson-light);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
 }
 
-.blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
-    padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
+/* ----------------------------------------------------------------------------
+   8. LINK STYLES
+   ---------------------------------------------------------------------------- */
+
+/* Gold link with underline — used for "Read more", "Book with X", etc. */
+.link-gold {
+    display: inline-block;
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    border-bottom: 1px solid var(--c-border-gold);
+    padding-bottom: 2px;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
+.link-gold:hover {
+    color: var(--c-gold-light);
+    border-bottom-color: var(--c-gold);
+}
+
+/* ----------------------------------------------------------------------------
+   9. ACCESSIBILITY
+   ---------------------------------------------------------------------------- */
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
-
-.darker-border-checkbox.form-check-input {
-    border-color: #929292;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
-    text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-    text-align: start;
+/* Focus visible — only show outlines on keyboard navigation */
+:focus-visible {
+    outline: 2px solid var(--c-crimson-light);
+    outline-offset: 2px;
 }
