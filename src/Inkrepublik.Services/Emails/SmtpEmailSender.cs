@@ -44,6 +44,12 @@ public class SmtpEmailSender : IEmailSender
         var mime = BuildMimeMessage(message);
 
         using var client = new SmtpClient();
+
+        // macOS's .NET SSL validator often can't reach certificate revocation
+        // endpoints, causing valid certificates to be rejected. Disabling revocation
+        // checks is a common workaround — the certificate chain is still validated.
+        client.CheckCertificateRevocation = false;
+
         try
         {
             var socketOptions = _options.UseStartTls

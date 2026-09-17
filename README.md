@@ -385,3 +385,18 @@ The project is being developed incrementally.
   - Object storage for downloaded images (Render disk is ephemeral)
   - Manual artist-tagging on synced images
   Architecture: new `SiteGalleryImage` entity, decoupled from `ArtistImage`.
+
+
+### Email in development
+
+Emails are sent via SMTP using Resend's shared sandbox domain (`onboarding@resend.dev`).
+**In this mode, Resend only delivers to the email address you signed up to Resend with**
+(currently `chikwapuloshine@gmail.com`). This is a Resend sandbox restriction, not a bug
+in the app.
+
+To send to any recipient in development, either:
+- Use a Gmail SMTP setup with an app password, or
+- Verify a custom domain on Resend (this is what we'll do in Phase 8 with the studio's domain)
+
+The booking flow itself is unaffected — bookings are always saved, and the owner email
+always delivers. Only the client confirmation email is subject to this restriction.

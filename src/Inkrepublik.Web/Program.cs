@@ -51,14 +51,17 @@ builder.Services.Configure<StudioOptions>(
     builder.Configuration.GetSection(StudioOptions.SectionName));
 
 var smtpEnabled = builder.Configuration.GetValue<bool>("Smtp:Enabled");
+var smtpHost = builder.Configuration.GetValue<string>("Smtp:Host") ?? "(unset)";
 
 if (smtpEnabled)
 {
     builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+    Console.WriteLine($"✓ Email: SMTP enabled (host: {smtpHost})");
 }
 else
 {
     builder.Services.AddScoped<IEmailSender, ConsoleEmailSender>();
+    Console.WriteLine("✓ Email: console mode (SMTP disabled)");
 }
 
 // ------------------------------------------------------------
