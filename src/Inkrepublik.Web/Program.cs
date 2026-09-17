@@ -9,6 +9,9 @@ using Inkrepublik.Services.Contact;
 using Inkrepublik.Services.Bookings;
 using Inkrepublik.Services.Emails;
 using Inkrepublik.Services;
+using Inkrepublik.Services.Admin;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +38,33 @@ builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISiteSettingService, SiteSettingService>();   
 builder.Services.AddScoped<IContactService, ContactService>(); 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddRazorPages();
 
+
+// ------------------------------------------------------------
+// Admin authentication
+// ------------------------------------------------------------
+builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/admin/login";
+        options.LogoutPath = "/admin/logout";
+        options.AccessDeniedPath = "/admin/login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+        options.Cookie.Name = "inkrepublik.admin";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
 
 // ------------------------------------------------------------
 // Email
@@ -88,13 +117,17 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<InkrepublikDbContext>>();
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasherService>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    var adminEmail = builder.Configuration.GetValue<string>("Admin:Email");
+    var adminPassword = builder.Configuration.GetValue<string>("Admin:Password");
 
     try
     {
         await using var db = await dbFactory.CreateDbContextAsync();
         await db.Database.MigrateAsync();
-        await DbSeeder.SeedAsync(db, logger);
+        await DbSeeder.SeedAsync(db, logger, adminEmail, adminPassword, hasher.Hash);
     }
     catch (Exception ex)
     {
@@ -113,8 +146,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 app.MapStaticAssets();
+app.MapRazorPages();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

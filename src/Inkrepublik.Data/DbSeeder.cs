@@ -22,13 +22,16 @@ public static class DbSeeder
     public static async Task SeedAsync(
         InkrepublikDbContext db,
         ILogger logger,
+        string? adminEmail,
+        string? adminPassword,
+        Func<string, string> hashPassword,
         CancellationToken cancellationToken = default)
     {
         await SeedArtistsAsync(db, logger, cancellationToken);
         await SeedServicesAsync(db, logger, cancellationToken);
         await SeedReviewsAsync(db, logger, cancellationToken);
         await SeedSiteSettingsAsync(db, logger, cancellationToken);
-        await SeedAdminUserAsync(db, logger, cancellationToken);
+        await SeedAdminUserAsync(db, logger, adminEmail, adminPassword, hashPassword, cancellationToken);
 
         logger.LogInformation("Database seeding complete.");
     }
@@ -282,6 +285,9 @@ public static class DbSeeder
     private static async Task SeedAdminUserAsync(
         InkrepublikDbContext db,
         ILogger logger,
+        string? adminEmail,
+        string? adminPassword,
+        Func<string, string> hashPassword,
         CancellationToken cancellationToken)
     {
         if (await db.AdminUsers.AnyAsync(cancellationToken))
@@ -290,14 +296,19 @@ public static class DbSeeder
             return;
         }
 
-        // NOTE: This placeholder password hash will be replaced in Phase 5
-        // when we set up proper password hashing via ASP.NET Core's
-        // PasswordHasher. For now, no auth exists, so this is just a row.
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+        {
+            logger.LogWarning(
+                "No admin credentials configured (Admin:Email / Admin:Password). " +
+                "Skipping admin user seed. You will not be able to log in.");
+            return;
+        }
+
         var admin = new AdminUser
         {
-            Email = "admin@inkrepublik.local",
+            Email = adminEmail.Trim(),
             DisplayName = "Studio Owner",
-            PasswordHash = "PLACEHOLDER_WILL_BE_REPLACED_IN_PHASE_5",
+            PasswordHash = hashPassword(adminPassword),
             IsActive = true,
         };
 

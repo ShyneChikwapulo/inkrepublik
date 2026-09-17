@@ -1,0 +1,146 @@
+/* ============================================================================
+   ADMIN LAYOUT
+   ============================================================================ */
+
+.admin-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    background: var(--c-ink);
+}
+
+/* ---------- Sidebar ---------- */
+.admin-sidebar {
+    background: var(--c-surface-3);
+    border-right: 1px solid var(--c-border-subtle);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.admin-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--c-border-subtle);
+    margin-bottom: 1.5rem;
+}
+
+.admin-logo img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.admin-logo-text {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+}
+
+/* ---------- Nav ---------- */
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+}
+
+.admin-nav-link {
+    display: block;
+    padding: 0.65rem 1.5rem;
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+    border-left: 2px solid transparent;
+    transition: color var(--transition-fast),
+                border-color var(--transition-fast),
+                background var(--transition-fast);
+}
+
+.admin-nav-link:hover {
+    color: var(--c-text);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-nav-link.active {
+    color: var(--c-crimson-light);
+    border-left-color: var(--c-crimson);
+    background: rgba(139, 26, 26, 0.08);
+}
+
+/* ---------- Footer ---------- */
+.admin-sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--c-border-subtle);
+}
+
+.admin-user {
+    font-size: 0.75rem;
+    color: var(--c-text-faint);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.admin-user strong {
+    color: var(--c-text-muted);
+    font-weight: 500;
+}
+
+.admin-logout {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-crimson);
+    transition: color var(--transition-fast);
+}
+
+.admin-logout:hover {
+    color: var(--c-crimson-light);
+}
+
+/* ---------- Main ---------- */
+.admin-main {
+    padding: 3rem 3rem 4rem;
+    max-width: 1400px;
+}
+
+/* ---------- Unauthorized fallback ---------- */
+.admin-unauthorized {
+    padding: 6rem 2rem;
+    text-align: center;
+    color: var(--c-text-dim);
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .admin-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-sidebar {
+        position: static;
+        height: auto;
+    }
+
+    .admin-main {
+        padding: 2rem 1.5rem 3rem;
+    }
+}

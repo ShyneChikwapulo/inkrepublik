@@ -1,0 +1,60 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+
+<AuthorizeView>
+    <Authorized>
+        <div class="admin-shell">
+            <aside class="admin-sidebar">
+                <div class="admin-logo">
+                    <img src="images/brand/inkrepublik-logo.png" alt="Inkrepublik" />
+                    <span class="admin-logo-text">Studio Admin</span>
+                </div>
+
+                <nav class="admin-nav">
+                    <NavLink href="/admin" Match="NavLinkMatch.All" class="admin-nav-link">
+                        Dashboard
+                    </NavLink>
+                    <NavLink href="/admin/bookings" class="admin-nav-link">
+                        Bookings
+                    </NavLink>
+                    <NavLink href="/admin/calendar" class="admin-nav-link">
+                        Calendar
+                    </NavLink>
+                    <NavLink href="/admin/artists" class="admin-nav-link">
+                        Artists
+                    </NavLink>
+                    <NavLink href="/admin/services" class="admin-nav-link">
+                        Services
+                    </NavLink>
+                    <NavLink href="/admin/reviews" class="admin-nav-link">
+                        Reviews
+                    </NavLink>
+                    <NavLink href="/admin/messages" class="admin-nav-link">
+                        Messages
+                    </NavLink>
+                    <NavLink href="/admin/settings" class="admin-nav-link">
+                        Site Settings
+                    </NavLink>
+                </nav>
+
+                <div class="admin-sidebar-footer">
+                    <p class="admin-user">
+                        Signed in as<br /><strong>@context.User.Identity?.Name</strong>
+                    </p>
+                    <a href="/admin/logout" class="admin-logout">Sign Out</a>
+                </div>
+            </aside>
+
+            <main class="admin-main">
+                @Body
+            </main>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        @* This shouldn't happen since pages use [Authorize], but belt-and-braces. *@
+        <div class="admin-unauthorized">
+            <p>Redirecting to login…</p>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
