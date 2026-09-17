@@ -1,0 +1,9 @@
+@* A thin decorative divider with a centered label and fading lines. *@
+
+<div class="ornament" style="margin-bottom: 0.75rem;">
+    <span class="eyebrow">@Label</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+}

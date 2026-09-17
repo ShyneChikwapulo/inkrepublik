@@ -1,0 +1,45 @@
+@* =========================================================================
+   REVIEWS PREVIEW (home)
+   Featured reviews pulled from the database.
+   ========================================================================= *@
+
+@inject IReviewService ReviewService
+
+<section class="reviews-preview">
+    <div class="container">
+        <OrnamentalDivider Label="What Clients Say" />
+        <h2 class="section-title">Permanent Impressions</h2>
+
+        @if (_reviews.Count == 0)
+        {
+            <p class="empty-state">No reviews to display yet.</p>
+        }
+        else
+        {
+            <div class="reviews-grid">
+                @foreach (var review in _reviews)
+                {
+                    <article class="review-card">
+                        <div class="review-stars">
+                            @for (var i = 0; i < review.Rating; i++)
+                            {
+                                <span class="star">★</span>
+                            }
+                        </div>
+                        <p class="review-text">"@review.Text"</p>
+                        <p class="review-author">— @review.ClientName</p>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<Review> _reviews = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _reviews = await ReviewService.GetFeaturedReviewsAsync(3);
+    }
+}

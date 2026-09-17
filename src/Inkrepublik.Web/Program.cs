@@ -1,6 +1,10 @@
 using Inkrepublik.Data;
 using Inkrepublik.Web.Components;
 using Microsoft.EntityFrameworkCore;
+using Inkrepublik.Services.Artists;
+using Inkrepublik.Services.Services;
+using Inkrepublik.Services.Reviews;
+using Inkrepublik.Services.SiteSettings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +17,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<InkrepublikDbContext>(options =>
     options.UseSqlServer(connectionString));
+    // ------------------------------------------------------------
+    // Application services (read-side queries)
+    // ------------------------------------------------------------
+builder.Services.AddScoped<IArtistService, ArtistService>();
+builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<ISiteSettingService, SiteSettingService>();    
 
 // ------------------------------------------------------------
 // Blazor

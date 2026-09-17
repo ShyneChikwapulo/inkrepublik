@@ -1,0 +1,19 @@
+@* Small uppercase eyebrow text used above section headings. *@
+
+@if (Ornament)
+{
+    <div class="ornament" style="margin-bottom: 0.75rem;">
+        <span class="eyebrow">@Text</span>
+    </div>
+}
+else
+{
+    <p class="eyebrow" style="margin-bottom: 0.75rem;">@Text</p>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = string.Empty;
+
+    /// <summary>Whether to render as a centered ornament (with lines).</summary>
+    [Parameter] public bool Ornament { get; set; }
+}

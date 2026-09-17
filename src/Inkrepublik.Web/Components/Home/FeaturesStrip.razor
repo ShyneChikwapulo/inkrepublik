@@ -1,0 +1,39 @@
+@* =========================================================================
+   FEATURES STRIP
+   Four short value props shown just below the hero.
+   ========================================================================= *@
+
+<section class="features">
+    <div class="features-inner">
+        @foreach (var feature in Features)
+        {
+            <div class="feature">
+                <div class="feature-icon">@((MarkupString)feature.IconSvg)</div>
+                <div>
+                    <p class="feature-title">@feature.Title</p>
+                    <p class="feature-desc">@feature.Description</p>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private record Feature(string IconSvg, string Title, string Description);
+
+    // SVG icons inlined as strings — keeps markup simple, avoids a helper component.
+    private static readonly Feature[] Features =
+    [
+        new(@"<svg width=""22"" height=""22"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""1.5""><rect x=""3"" y=""4"" width=""18"" height=""18"" rx=""2""/><line x1=""16"" y1=""2"" x2=""16"" y2=""6""/><line x1=""8"" y1=""2"" x2=""8"" y2=""6""/><line x1=""3"" y1=""10"" x2=""21"" y2=""10""/></svg>",
+            "Easy Booking", "Schedule your session online in minutes"),
+
+        new(@"<svg width=""22"" height=""22"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""1.5""><circle cx=""12"" cy=""7"" r=""4""/><path d=""M5.5 21a9 9 0 0 1 13 0""/></svg>",
+            "Expert Artists", "Skilled professionals in every style"),
+
+        new(@"<svg width=""22"" height=""22"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""1.5""><path d=""M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08""/><path d=""M7.07 14.94C5.79 16.2 4 16 2 22c6-2 6-4 7.43-5.57""/></svg>",
+            "Custom Designs", "Unique tattoos made just for you"),
+
+        new(@"<svg width=""22"" height=""22"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""1.5""><path d=""M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z""/><polyline points=""9,12 11,14 15,10""/></svg>",
+            "Safe & Clean", "Hygienic studio. Your safety first"),
+    ];
+}

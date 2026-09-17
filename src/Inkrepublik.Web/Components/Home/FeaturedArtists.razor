@@ -1,0 +1,76 @@
+@* =========================================================================
+   FEATURED ARTISTS (home preview)
+   Top 3 active artists pulled from the database.
+   ========================================================================= *@
+
+@inject IArtistService ArtistService
+
+<section class="featured-artists">
+    <div class="container">
+        <OrnamentalDivider Label="Meet the Artists" />
+        <h2 class="section-title">The Hands Behind the Ink</h2>
+
+        @if (_artists.Count == 0)
+        {
+            <p class="empty-state">No artists to display yet.</p>
+        }
+        else
+        {
+            <div class="artists-grid">
+                @foreach (var artist in _artists)
+                {
+                    <article class="artist-card">
+                        <div class="artist-image">
+                            <img src="@GetArtistImage(artist)"
+                                 alt="@artist.Name"
+                                 loading="lazy" />
+                        </div>
+                        <div class="artist-body">
+                            @if (!string.IsNullOrWhiteSpace(artist.Specialties))
+                            {
+                                <p class="artist-specialty">@artist.Specialties</p>
+                            }
+                            <h3 class="artist-name">@artist.Name</h3>
+                            @if (!string.IsNullOrWhiteSpace(artist.Bio))
+                            {
+                                <p class="artist-bio">@artist.Bio</p>
+                            }
+                            <a href="/artists/@artist.Id" class="link-gold">
+                                View Portfolio
+                            </a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<Artist> _artists = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _artists = await ArtistService.GetFeaturedArtistsAsync(3);
+    }
+
+    // Placeholder fallback — real images live on the ArtistImage collection
+    // which we load on the detail page. For the home preview we use a
+    // generic placeholder image until the studio provides real photos.
+    private static string GetArtistImage(Artist artist)
+    {
+        if (!string.IsNullOrWhiteSpace(artist.ProfileImagePath))
+            return artist.ProfileImagePath;
+
+        // Deterministic Unsplash portraits as placeholders
+        var placeholders = new[]
+        {
+            "https://images.unsplash.com/photo-1552627019-947c3789ffb5?w=600&h=720&fit=crop&auto=format",
+            "https://images.unsplash.com/photo-1783973190331-53d4db4f697f?w=600&h=720&fit=crop&auto=format",
+            "https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=600&h=720&fit=crop&auto=format",
+        };
+
+        var index = artist.Id % placeholders.Length;
+        return placeholders[index];
+    }
+}

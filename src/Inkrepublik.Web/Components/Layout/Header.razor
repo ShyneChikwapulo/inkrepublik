@@ -67,7 +67,6 @@
     private bool _mobileOpen;
     private ElementReference _headerRef;
     private IJSObjectReference? _module;
-    private IJSObjectReference? _cleanup;
 
     private record NavLink(string Label, string Href);
 
@@ -89,7 +88,7 @@
         _module = await JS.InvokeAsync<IJSObjectReference>(
             "import", "./js/site.js");
 
-        _cleanup = await _module.InvokeAsync<IJSObjectReference>(
+        await _module.InvokeVoidAsync(
             "initScrollToggle",
             _headerRef,
             "site-header--scrolled");
@@ -103,9 +102,13 @@
     {
         try
         {
-            if (_cleanup is not null) await _cleanup.InvokeVoidAsync("invoke");
-            if (_module is not null) await _module.DisposeAsync();
+            if (_module is not null)
+            {
+                await _module.InvokeVoidAsync("disposeScrollToggle", _headerRef);
+                await _module.DisposeAsync();
+            }
         }
         catch (JSDisconnectedException) { /* page navigated away */ }
+        catch (ObjectDisposedException) { /* module already disposed */ }
     }
 }

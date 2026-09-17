@@ -1,0 +1,72 @@
+@* =========================================================================
+   HERO SECTION
+   Split layout: text left, full-bleed image right. Extends under the fixed
+   header (negative margin compensates for MainLayout's header padding).
+   ========================================================================= *@
+
+<section class="hero">
+    <!-- Left: copy -->
+    <div class="hero-copy">
+        <p class="eyebrow hero-eyebrow">✦ &nbsp; Art. Craft. Expression.</p>
+
+        <h1 class="hero-title">
+            Ink Carved<br />
+            Into Your<br />
+            <span class="text-crimson">Story.</span>
+        </h1>
+
+        <p class="hero-lead">
+            Custom tattoos built around you — your memories, your identity,
+            your skin. Timeless craftsmanship from artists who live for this.
+        </p>
+
+        <div class="hero-ctas">
+            <a href="/book" class="btn btn-primary">
+                Book a Consultation
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12,5 19,12 12,19" />
+                </svg>
+            </a>
+            <a href="/gallery" class="btn btn-ghost">View Portfolio</a>
+        </div>
+
+        <div class="hero-stats">
+            @foreach (var stat in Stats)
+            {
+                <div class="hero-stat">
+                    <p class="hero-stat-value">@stat.Value</p>
+                    <p class="hero-stat-label">@stat.Label</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right: image + badge -->
+    <div class="hero-visual">
+        <img src="https://images.unsplash.com/photo-1759247943101-f1b32bcc6a8b?w=900&h=1100&fit=crop&auto=format"
+             alt="Tattooed model with dramatic sleeve against dark background"
+             class="hero-image" />
+
+        <div class="hero-gradient-left"></div>
+        <div class="hero-gradient-bottom"></div>
+
+        <div class="hero-badge">
+            <p class="hero-badge-top">Premium Quality</p>
+            <img src="images/brand/inkrepublik-logo.png"
+                 alt="Inkrepublik" class="hero-badge-logo" />
+            <p class="hero-badge-bottom">Est. 2012</p>
+        </div>
+    </div>
+</section>
+
+@code {
+    private record HeroStat(string Value, string Label);
+
+    private static readonly HeroStat[] Stats =
+    [
+        new("1,200+", "Pieces Completed"),
+        new("12",     "Years of Craft"),
+        new("3",      "Resident Artists"),
+    ];
+}

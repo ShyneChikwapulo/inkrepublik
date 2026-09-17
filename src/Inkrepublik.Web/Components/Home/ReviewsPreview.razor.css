@@ -1,0 +1,64 @@
+/* ============================================================================
+   REVIEWS PREVIEW
+   ============================================================================ */
+
+.reviews-preview {
+    padding: var(--space-4xl) 0;
+    background: var(--c-surface-3);
+}
+
+.reviews-preview .section-title {
+    margin-bottom: 4rem;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--c-text-dim);
+    padding: 3rem 0;
+}
+
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.review-card {
+    background: var(--c-surface);
+    border-left: 2px solid var(--c-crimson);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.review-stars {
+    color: var(--c-gold);
+    letter-spacing: 0.2em;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.review-text {
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--c-text-muted);
+    font-weight: 300;
+    font-style: italic;
+    flex: 1;
+    margin-bottom: 1.5rem;
+}
+
+.review-author {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+}
+
+@media (max-width: 1000px) {
+    .reviews-grid {
+        grid-template-columns: 1fr;
+    }
+}
