@@ -1,0 +1,68 @@
+/* ============================================================================
+   GALLERY PAGE
+   ============================================================================ */
+
+.page-hero {
+    padding: 6rem 0 4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--c-border-subtle);
+}
+
+.page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+}
+
+.page-lead {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--c-text-muted);
+    font-weight: 300;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+.gallery-section {
+    padding: var(--space-4xl) 0;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+/* ---------- Loading / empty ---------- */
+.loading {
+    color: var(--c-text-dim);
+    padding: 4rem 0;
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.empty-state-block {
+    text-align: center;
+    padding: 5rem 0;
+}
+
+.empty-state {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state-sub {
+    font-size: 0.9rem;
+    color: var(--c-text-faint);
+    font-weight: 300;
+}

@@ -1,0 +1,35 @@
+@* =========================================================================
+   PORTFOLIO TILE
+   Square-ish image tile with hover overlay. Used on artist detail pages
+   and the aggregated gallery page.
+   ========================================================================= *@
+
+<figure class="portfolio-tile">
+    <img src="@ImagePath"
+         alt="@(Caption ?? $"{ArtistName} — portfolio")"
+         loading="lazy" />
+
+    <figcaption class="portfolio-tile-overlay">
+        <span class="portfolio-tile-label">@(Caption ?? ArtistName)</span>
+        @if (ShowArtistAttribution && !string.IsNullOrWhiteSpace(ArtistName))
+        {
+            <a href="/artists/@ArtistId" class="portfolio-tile-artist">@ArtistName</a>
+        }
+    </figcaption>
+</figure>
+
+@code {
+    [Parameter, EditorRequired] public string ImagePath { get; set; } = string.Empty;
+
+    [Parameter] public string? Caption { get; set; }
+
+    [Parameter] public string ArtistName { get; set; } = string.Empty;
+
+    [Parameter] public int ArtistId { get; set; }
+
+    /// <summary>
+    /// On the artist's own page, we don't need to show their name under each tile.
+    /// On the global gallery, we do. This controls that.
+    /// </summary>
+    [Parameter] public bool ShowArtistAttribution { get; set; } = true;
+}

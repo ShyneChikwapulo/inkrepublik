@@ -82,15 +82,11 @@ else
                 <div class="portfolio-grid">
                     @foreach (var image in _artist.PortfolioImages)
                     {
-                        <figure class="portfolio-item">
-                            <img src="@image.ImagePath"
-                                 alt="@(image.Caption ?? $"{_artist.Name} — portfolio")"
-                                 loading="lazy" />
-                            @if (!string.IsNullOrWhiteSpace(image.Caption))
-                            {
-                                <figcaption class="portfolio-caption">@image.Caption</figcaption>
-                            }
-                        </figure>
+                        <PortfolioTile ImagePath="@image.ImagePath"
+                                    Caption="@image.Caption"
+                                    ArtistName="@_artist.Name"
+                                    ArtistId="@_artist.Id"
+                                    ShowArtistAttribution="false" />
                     }
                 </div>
             }

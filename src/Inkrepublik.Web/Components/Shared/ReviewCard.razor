@@ -1,0 +1,29 @@
+@* =========================================================================
+   REVIEW CARD
+   Used on the home preview and the /reviews listing page.
+   ========================================================================= *@
+
+<article class="review-card">
+    <div class="review-stars" aria-label="@Rating stars">
+        @for (var i = 0; i < 5; i++)
+        {
+            <span class="star @(i < Rating ? "star-filled" : "star-empty")">★</span>
+        }
+    </div>
+
+    <p class="review-text">"@Review.Text"</p>
+
+    <footer class="review-footer">
+        <p class="review-author">— @Review.ClientName</p>
+        @if (!string.IsNullOrWhiteSpace(Review.Source))
+        {
+            <p class="review-source">via @Review.Source</p>
+        }
+    </footer>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public Review Review { get; set; } = default!;
+
+    private int Rating => Math.Clamp(Review.Rating, 1, 5);
+}

@@ -1,0 +1,61 @@
+/* ============================================================================
+   REVIEW CARD
+   ============================================================================ */
+
+.review-card {
+    background: var(--c-surface);
+    border-left: 2px solid var(--c-crimson);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.review-stars {
+    letter-spacing: 0.2em;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.star-filled {
+    color: var(--c-gold);
+}
+
+.star-empty {
+    color: #333333;
+}
+
+.review-text {
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--c-text-muted);
+    font-weight: 300;
+    font-style: italic;
+    flex: 1;
+    margin-bottom: 1.5rem;
+}
+
+.review-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.review-author {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+}
+
+.review-source {
+    font-size: 0.7rem;
+    color: var(--c-text-faint);
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}

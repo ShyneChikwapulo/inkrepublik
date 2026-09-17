@@ -19,16 +19,7 @@
             <div class="reviews-grid">
                 @foreach (var review in _reviews)
                 {
-                    <article class="review-card">
-                        <div class="review-stars">
-                            @for (var i = 0; i < review.Rating; i++)
-                            {
-                                <span class="star">★</span>
-                            }
-                        </div>
-                        <p class="review-text">"@review.Text"</p>
-                        <p class="review-author">— @review.ClientName</p>
-                    </article>
+                    <ReviewCard Review="review" />
                 }
             </div>
         }

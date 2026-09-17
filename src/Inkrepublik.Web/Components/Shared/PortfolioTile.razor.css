@@ -1,0 +1,61 @@
+/* ============================================================================
+   PORTFOLIO TILE
+   ============================================================================ */
+
+.portfolio-tile {
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    background: var(--c-surface);
+    aspect-ratio: 4 / 5;
+}
+
+.portfolio-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--transition-slow);
+}
+
+.portfolio-tile:hover img {
+    transform: scale(1.05);
+}
+
+.portfolio-tile-overlay {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 1.25rem;
+    background: linear-gradient(to top, rgba(139, 26, 26, 0.9) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.portfolio-tile:hover .portfolio-tile-overlay {
+    opacity: 1;
+}
+
+.portfolio-tile-label {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-text);
+}
+
+.portfolio-tile-artist {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--c-gold);
+    transition: color var(--transition-fast);
+    align-self: flex-start;
+}
+
+.portfolio-tile-artist:hover {
+    color: var(--c-gold-light);
+    text-decoration: underline;
+}

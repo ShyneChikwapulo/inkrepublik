@@ -1,0 +1,74 @@
+@page "/reviews"
+@rendermode InteractiveServer
+
+@inject IReviewService ReviewService
+
+<PageTitle>Reviews — Inkrepublik Tattoo Studio</PageTitle>
+
+<section class="page-hero">
+    <div class="container">
+        <OrnamentalDivider Label="What Clients Say" />
+        <h1 class="page-title">Reviews</h1>
+        @if (!_loading && _reviews.Count > 0)
+        {
+            <div class="reviews-summary">
+                <div class="reviews-avg">
+                    <span class="reviews-avg-value">@_averageRating</span>
+                    <span class="reviews-avg-stars">
+                        @for (var i = 0; i < 5; i++)
+                        {
+                            <span class="star @(i < Math.Round(_averageRating) ? "star-filled" : "star-empty")">★</span>
+                        }
+                    </span>
+                </div>
+                <p class="reviews-avg-label">
+                    Based on @_reviews.Count approved review@(_reviews.Count == 1 ? "" : "s")
+                </p>
+            </div>
+        }
+        else
+        {
+            <p class="page-lead">
+                Real words from real people who've trusted us with their skin.
+            </p>
+        }
+    </div>
+</section>
+
+<section class="reviews-section">
+    <div class="container">
+        @if (_loading)
+        {
+            <p class="loading">Loading reviews…</p>
+        }
+        else if (_reviews.Count == 0)
+        {
+            <div class="empty-state-block">
+                <p class="empty-state">No reviews to display yet.</p>
+            </div>
+        }
+        else
+        {
+            <div class="reviews-grid">
+                @foreach (var review in _reviews)
+                {
+                    <ReviewCard Review="review" />
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<Review> _reviews = [];
+    private bool _loading = true;
+
+    private double _averageRating =>
+        _reviews.Count == 0 ? 0 : Math.Round(_reviews.Average(r => r.Rating), 1);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _reviews = await ReviewService.GetApprovedReviewsAsync();
+        _loading = false;
+    }
+}

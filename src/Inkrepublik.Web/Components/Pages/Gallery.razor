@@ -1,0 +1,59 @@
+@page "/gallery"
+@rendermode InteractiveServer
+
+@inject IArtistService ArtistService
+
+<PageTitle>Gallery — Inkrepublik Tattoo Studio</PageTitle>
+
+<section class="page-hero">
+    <div class="container">
+        <OrnamentalDivider Label="Our Work" />
+        <h1 class="page-title">Gallery</h1>
+        <p class="page-lead">
+            Every piece here is custom, drawn for a specific person, and lives
+            on their skin. Browse by artist, or just scroll.
+        </p>
+    </div>
+</section>
+
+<section class="gallery-section">
+    <div class="container">
+        @if (_loading)
+        {
+            <p class="loading">Loading gallery…</p>
+        }
+        else if (_items.Count == 0)
+        {
+            <div class="empty-state-block">
+                <p class="empty-state">Portfolio coming soon.</p>
+                <p class="empty-state-sub">
+                    We're still loading up the gallery — check back shortly.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="gallery-grid">
+                @foreach (var item in _items)
+                {
+                    <PortfolioTile ImagePath="@item.ImagePath"
+                                   Caption="@item.Caption"
+                                   ArtistName="@item.ArtistName"
+                                   ArtistId="@item.ArtistId"
+                                   ShowArtistAttribution="true" />
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<GalleryItem> _items = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await ArtistService.GetAllPortfolioImagesAsync();
+        _loading = false;
+    }
+}
