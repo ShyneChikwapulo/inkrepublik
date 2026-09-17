@@ -9,6 +9,16 @@ namespace Inkrepublik.Services.Bookings;
 
 public interface IBookingService
 {
+
+    /// <summary>
+    /// Client-initiated reschedule via magic link. Only Pending or Confirmed
+    /// bookings can be rescheduled by the client.
+    /// </summary>
+    Task<bool> RescheduleByTokenAsync(
+        string token,
+        DateTime newPreferredDateTime,
+        CancellationToken ct = default);
+
     /// <summary>
     /// Submits a new booking request. Saves it as Pending with a fresh magic
     /// token, then sends two emails: owner notification + client confirmation
@@ -126,6 +136,39 @@ public class BookingService : IBookingService
         return true;
     }
 
+    public async Task<bool> RescheduleByTokenAsync(
+        string token,
+        DateTime newPreferredDateTime,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(token)) return false;
+
+        await using var db = await _factory.CreateDbContextAsync(ct);
+        var booking = await db.BookingRequests
+            .FirstOrDefaultAsync(b => b.MagicToken == token, ct);
+
+        if (booking is null) return false;
+        if (booking.MagicTokenExpiresAt < DateTime.UtcNow) return false;
+
+        if (booking.Status is not (BookingStatus.Pending or BookingStatus.Confirmed))
+            return false;
+
+        // Changing the preferred time returns the booking to Pending,
+        // so the owner re-confirms. This is deliberate — a client can't
+        // unilaterally move an already-confirmed appointment.
+        booking.PreferredDateTime = newPreferredDateTime;
+        booking.Status = BookingStatus.Pending;
+        booking.ConfirmedDateTime = null;
+        booking.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Booking {Id} rescheduled to {DateTime:u} by client via magic link.",
+            booking.Id, newPreferredDateTime);
+
+        return true;
+    }
     public async Task<List<BookingRequest>> GetAllAsync(CancellationToken ct = default)
     {
         await using var db = await _factory.CreateDbContextAsync(ct);

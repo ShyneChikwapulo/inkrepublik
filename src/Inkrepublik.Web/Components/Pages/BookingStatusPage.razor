@@ -1,0 +1,403 @@
+@page "/booking/status/{Token}"
+@rendermode InteractiveServer
+
+@inject IBookingService BookingService
+@inject NavigationManager Nav
+
+<PageTitle>Your Booking — Inkrepublik Tattoo Studio</PageTitle>
+
+@if (_loading)
+{
+    <section class="status-section">
+        <div class="container">
+            <p class="loading">Loading your booking…</p>
+        </div>
+    </section>
+}
+else if (_booking is null)
+{
+    <section class="status-section">
+        <div class="container status-container">
+            <div class="status-card status-card--error">
+                <h1 class="status-title">Link not valid</h1>
+                <p class="status-text">
+                    This magic link has expired, was already used, or the booking
+                    no longer exists. If you need help, please contact us directly.
+                </p>
+                <div class="status-actions">
+                    <a href="/contact" class="btn btn-primary">Contact Us</a>
+                    <a href="/book" class="btn btn-ghost">Make a New Request</a>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else if (_cancelled)
+{
+    <section class="status-section">
+        <div class="container status-container">
+            <div class="status-card status-card--info">
+                <h1 class="status-title">Booking cancelled</h1>
+                <p class="status-text">
+                    Your request has been cancelled. If this was a mistake, you
+                    can always make a new one.
+                </p>
+                <div class="status-actions">
+                    <a href="/book" class="btn btn-primary">Make a New Request</a>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <section class="status-section">
+        <div class="container status-container">
+            <OrnamentalDivider Label="Your Booking" />
+            <h1 class="status-title">@GetStatusHeading(_booking.Status)</h1>
+            <p class="status-lead">@GetStatusMessage(_booking.Status)</p>
+
+            <div class="status-card">
+                <!-- Status badge -->
+                <div class="status-badge @GetStatusBadgeClass(_booking.Status)">
+                    @_booking.Status
+                </div>
+
+                <!-- Booking details -->
+                <dl class="status-details">
+                    <div class="status-detail">
+                        <dt>Name</dt>
+                        <dd>@_booking.ClientName</dd>
+                    </div>
+                    <div class="status-detail">
+                        <dt>Email</dt>
+                        <dd>@_booking.ClientEmail</dd>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_booking.ClientPhone))
+                    {
+                        <div class="status-detail">
+                            <dt>Phone</dt>
+                            <dd>@_booking.ClientPhone</dd>
+                        </div>
+                    }
+                    <div class="status-detail">
+                        <dt>Preferred date & time</dt>
+                        <dd>@_booking.PreferredDateTime.ToString("dddd, d MMMM yyyy 'at' HH:mm")</dd>
+                    </div>
+                    @if (_booking.ConfirmedDateTime.HasValue)
+                    {
+                        <div class="status-detail">
+                            <dt>Confirmed date & time</dt>
+                            <dd>@_booking.ConfirmedDateTime.Value.ToString("dddd, d MMMM yyyy 'at' HH:mm")</dd>
+                        </div>
+                    }
+                    @if (_booking.Artist is not null)
+                    {
+                        <div class="status-detail">
+                            <dt>Artist</dt>
+                            <dd>@_booking.Artist.Name</dd>
+                        </div>
+                    }
+                    @if (_booking.Service is not null)
+                    {
+                        <div class="status-detail">
+                            <dt>Service</dt>
+                            <dd>@_booking.Service.Name</dd>
+                        </div>
+                    }
+                    <div class="status-detail status-detail--full">
+                        <dt>Your description</dt>
+                        <dd class="status-description">@_booking.Description</dd>
+                    </div>
+                    <div class="status-detail">
+                        <dt>Requested on</dt>
+                        <dd>@_booking.CreatedAt.ToString("d MMMM yyyy")</dd>
+                    </div>
+                </dl>
+
+                <!-- Actions -->
+                @if (CanModify)
+                {
+                    <div class="status-actions-divider"></div>
+                    <p class="status-actions-label">Need to make a change?</p>
+
+                    @if (_editing)
+                    {
+                        <div class="status-reschedule">
+                            <div class="status-reschedule-grid">
+                                <div class="form-field">
+                                    <label class="form-label" for="reschedule-date">New date</label>
+                                    <InputSelect id="reschedule-date" class="form-control"
+                                                 @bind-Value="_newDate">
+                                        @foreach (var date in _availableDates)
+                                        {
+                                            <option value="@date.ToString("yyyy-MM-dd")">
+                                                @date.ToString("dddd, d MMMM")
+                                            </option>
+                                        }
+                                    </InputSelect>
+                                </div>
+
+                                <div class="form-field">
+                                    <label class="form-label" for="reschedule-time">New time</label>
+                                    <InputSelect id="reschedule-time" class="form-control"
+                                                 @bind-Value="_newTime">
+                                        @foreach (var time in _availableTimes)
+                                        {
+                                            <option value="@time.ToString("HH:mm")">
+                                                @time.ToString("HH:mm")
+                                            </option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(_actionError))
+                            {
+                                <p class="form-error">@_actionError</p>
+                            }
+
+                            <div class="status-reschedule-actions">
+                                <button class="btn btn-primary" @onclick="SaveReschedule" disabled="@_processing">
+                                    @(_processing ? "Saving…" : "Save New Time")
+                                </button>
+                                <button class="btn btn-ghost" @onclick="CancelEdit" disabled="@_processing">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="status-actions">
+                            <button class="btn btn-primary" @onclick="StartEdit" disabled="@_processing">
+                                Change Date / Time
+                            </button>
+                            <button class="btn btn-ghost" @onclick="ConfirmCancel" disabled="@_processing">
+                                @(_confirmingCancel ? "Tap again to confirm" : "Cancel Booking")
+                            </button>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(_actionError))
+                        {
+                            <p class="form-error" style="margin-top:1rem;">@_actionError</p>
+                        }
+                    }
+                }
+                else if (_booking.Status is BookingStatus.Completed or BookingStatus.NoShow)
+                {
+                    <div class="status-actions-divider"></div>
+                    <p class="status-text-muted">
+                        This booking is complete and can't be modified. If you
+                        need another appointment, feel free to make a new request.
+                    </p>
+                    <div class="status-actions">
+                        <a href="/book" class="btn btn-primary">Make a New Request</a>
+                    </div>
+                }
+                else if (_booking.Status is BookingStatus.Cancelled or BookingStatus.Declined)
+                {
+                    <div class="status-actions-divider"></div>
+                    <p class="status-text-muted">
+                        This booking was @_booking.Status.ToString().ToLower().
+                        You're welcome to make a new request.
+                    </p>
+                    <div class="status-actions">
+                        <a href="/book" class="btn btn-primary">Make a New Request</a>
+                    </div>
+                }
+            </div>
+
+            <p class="status-footer-note">
+                Bookmark this page — it's your private link to this booking. Don't
+                share it with anyone.
+            </p>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private BookingRequest? _booking;
+    private bool _loading = true;
+    private bool _processing;
+    private bool _editing;
+    private bool _confirmingCancel;
+    private bool _cancelled;
+    private string? _actionError;
+
+    private List<DateOnly> _availableDates = [];
+    private List<TimeOnly> _availableTimes = [];
+    private DateOnly _newDate;
+    private TimeOnly _newTime;
+
+    private bool CanModify =>
+        _booking is not null &&
+        _booking.Status is BookingStatus.Pending or BookingStatus.Confirmed;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _booking = await BookingService.GetByTokenAsync(Token);
+        _loading = false;
+
+        if (_booking is not null)
+        {
+            _availableDates = BuildAvailableDates();
+            _availableTimes = BuildAvailableTimes();
+
+            var currentDate = DateOnly.FromDateTime(_booking.PreferredDateTime);
+            var currentTime = TimeOnly.FromDateTime(_booking.PreferredDateTime);
+
+            _newDate = _availableDates.Contains(currentDate) ? currentDate : _availableDates.FirstOrDefault();
+            _newTime = _availableTimes.Contains(currentTime) ? currentTime : _availableTimes.FirstOrDefault();
+        }
+    }
+
+    private void StartEdit()
+    {
+        _editing = true;
+        _confirmingCancel = false;
+        _actionError = null;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = false;
+        _actionError = null;
+    }
+
+    private async Task SaveReschedule()
+    {
+        _processing = true;
+        _actionError = null;
+
+        try
+        {
+            var newDateTime = _newDate.ToDateTime(_newTime).ToUniversalTime();
+            var ok = await BookingService.RescheduleByTokenAsync(Token, newDateTime);
+
+            if (!ok)
+            {
+                _actionError = "We couldn't update this booking. It may have already been completed or cancelled.";
+            }
+            else
+            {
+                _booking = await BookingService.GetByTokenAsync(Token);
+                _editing = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _actionError = "Something went wrong. Please try again.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task ConfirmCancel()
+    {
+        if (!_confirmingCancel)
+        {
+            _confirmingCancel = true;
+            _actionError = null;
+            return;
+        }
+
+        _processing = true;
+        _actionError = null;
+
+        try
+        {
+            var ok = await BookingService.CancelByTokenAsync(Token);
+            if (ok)
+            {
+                _cancelled = true;
+            }
+            else
+            {
+                _actionError = "We couldn't cancel this booking. It may have already been completed or cancelled.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _actionError = "Something went wrong. Please try again.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _processing = false;
+            _confirmingCancel = false;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Status copy
+    // ----------------------------------------------------------------
+    private static string GetStatusHeading(BookingStatus status) => status switch
+    {
+        BookingStatus.Pending => "Your request is in.",
+        BookingStatus.Confirmed => "You're confirmed!",
+        BookingStatus.Declined => "This booking was declined.",
+        BookingStatus.Completed => "Thanks for coming in.",
+        BookingStatus.Cancelled => "This booking was cancelled.",
+        BookingStatus.NoShow => "You missed this appointment.",
+        _ => "Your booking",
+    };
+
+    private static string GetStatusMessage(BookingStatus status) => status switch
+    {
+        BookingStatus.Pending => "We've received your request and will confirm the details by email within 24 hours.",
+        BookingStatus.Confirmed => "We've confirmed your appointment. See you soon — details below.",
+        BookingStatus.Declined => "Unfortunately we couldn't accommodate this request. Feel free to make a new one.",
+        BookingStatus.Completed => "We hope you love your new piece. Thanks for trusting us.",
+        BookingStatus.Cancelled => "This booking has been cancelled. You're welcome to make a new request anytime.",
+        BookingStatus.NoShow => "You didn't make it to this appointment. Get in touch if something came up.",
+        _ => "",
+    };
+
+    private static string GetStatusBadgeClass(BookingStatus status) => status switch
+    {
+        BookingStatus.Confirmed => "status-badge--confirmed",
+        BookingStatus.Pending => "status-badge--pending",
+        BookingStatus.Completed => "status-badge--completed",
+        BookingStatus.Declined or BookingStatus.Cancelled or BookingStatus.NoShow => "status-badge--negative",
+        _ => "",
+    };
+
+    // ----------------------------------------------------------------
+    // Same date/time options as BookingForm — kept in sync deliberately.
+    // ----------------------------------------------------------------
+    private static List<DateOnly> BuildAvailableDates()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var dates = new List<DateOnly>();
+
+        for (var i = 1; i <= 60; i++)
+        {
+            var date = today.AddDays(i);
+            if (date.DayOfWeek == DayOfWeek.Sunday) continue;
+            dates.Add(date);
+        }
+
+        return dates;
+    }
+
+    private static List<TimeOnly> BuildAvailableTimes()
+    {
+        var times = new List<TimeOnly>();
+        var start = new TimeOnly(10, 0);
+        var end = new TimeOnly(17, 0);
+
+        for (var t = start; t <= end; t = t.AddMinutes(30))
+        {
+            times.Add(t);
+        }
+
+        return times;
+    }
+}
