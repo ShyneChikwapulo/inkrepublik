@@ -1,0 +1,50 @@
+@page "/artists"
+@rendermode InteractiveServer
+
+@inject IArtistService ArtistService
+
+<PageTitle>Artists — Inkrepublik Tattoo Studio</PageTitle>
+
+<section class="page-hero">
+    <div class="container">
+        <OrnamentalDivider Label="The Team" />
+        <h1 class="page-title">Our Artists</h1>
+        <p class="page-lead">
+            A small team of dedicated tattoo artists and piercing specialists.
+            Every one of them works with you from the first sketch to the healed piece.
+        </p>
+    </div>
+</section>
+
+<section class="artists-section">
+    <div class="container">
+        @if (_loading)
+        {
+            <p class="loading">Loading artists…</p>
+        }
+        else if (_artists.Count == 0)
+        {
+            <p class="empty-state">No artists to display yet.</p>
+        }
+        else
+        {
+            <div class="artists-grid">
+                @foreach (var artist in _artists)
+                {
+                    <ArtistCard Artist="artist" />
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<Artist> _artists = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _artists = await ArtistService.GetActiveArtistsAsync();
+        _loading = false;
+    }
+}

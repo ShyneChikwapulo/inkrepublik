@@ -1,46 +1,31 @@
 /* ============================================================================
-   FEATURED ARTISTS
+   ARTIST CARD
    ============================================================================ */
-
-.featured-artists {
-    padding: var(--space-4xl) 0;
-}
-
-.featured-artists :deep(.container) {
-    /* container class comes from app.css, no override needed */
-}
-
-.featured-artists .section-title {
-    margin-bottom: 4rem;
-}
-
-.empty-state {
-    text-align: center;
-    color: var(--c-text-dim);
-    padding: 3rem 0;
-}
-
-.artists-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-}
 
 .artist-card {
     background: var(--c-surface);
     border: 1px solid var(--c-border-subtle);
     overflow: hidden;
     transition: border-color var(--transition-base);
+    height: 100%;
 }
 
 .artist-card:hover {
     border-color: rgba(139, 26, 26, 0.5);
 }
 
+.artist-card-link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: inherit;
+}
+
 .artist-image {
     height: 320px;
     overflow: hidden;
     background: var(--c-surface-2);
+    flex-shrink: 0;
 }
 
 .artist-image img {
@@ -57,6 +42,9 @@
 
 .artist-body {
     padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .artist-specialty {
@@ -83,33 +71,15 @@
     color: var(--c-text-dim);
     font-weight: 300;
     margin-bottom: 1.25rem;
+    flex: 1;
 
-    /* Clamp to 3 lines */
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-@media (max-width: 1000px) {
-    .artists-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.view-all {
-    text-align: center;
-    margin-top: 3rem;
-}
-
-.view-all .link-gold {
-    font-size: 0.7rem;
-    padding: 0.6rem 1.5rem;
-    border: 1px solid var(--c-border-gold);
-    padding-bottom: 0.6rem;
-}
-
-.view-all .link-gold:hover {
-    border-color: var(--c-gold);
-    background: rgba(200, 184, 138, 0.05);
+.artist-body .link-gold {
+    align-self: flex-start;
+    margin-top: auto;
 }

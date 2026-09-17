@@ -1,0 +1,148 @@
+@page "/artists/{Id:int}"
+@rendermode InteractiveServer
+
+@inject IArtistService ArtistService
+@inject NavigationManager Nav
+
+<PageTitle>@(_artist?.Name ?? "Artist") — Inkrepublik Tattoo Studio</PageTitle>
+
+@if (_loading)
+{
+    <section class="detail-loading">
+        <div class="container">
+            <p class="loading">Loading…</p>
+        </div>
+    </section>
+}
+else if (_artist is null)
+{
+    <section class="detail-not-found">
+        <div class="container">
+            <h1 class="page-title">Artist not found</h1>
+            <p class="page-lead">We couldn't find that artist.</p>
+            <a href="/artists" class="link-gold">Back to all artists</a>
+        </div>
+    </section>
+}
+else
+{
+    <!-- Hero band with name + specialty -->
+    <section class="detail-hero">
+        <div class="container detail-hero-inner">
+            <div class="detail-hero-text">
+                @if (!string.IsNullOrWhiteSpace(_artist.Specialties))
+                {
+                    <p class="eyebrow">@_artist.Specialties</p>
+                }
+                <h1 class="detail-name">@_artist.Name</h1>
+                @if (!string.IsNullOrWhiteSpace(_artist.Title))
+                {
+                    <p class="detail-title">@_artist.Title</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_artist.Bio))
+                {
+                    <p class="detail-bio">@_artist.Bio</p>
+                }
+
+                <div class="detail-meta">
+                    @if (!string.IsNullOrWhiteSpace(_artist.InstagramHandle))
+                    {
+                        <a href="https://instagram.com/@_artist.InstagramHandle"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="link-gold">
+                            @@@_artist.InstagramHandle on Instagram
+                        </a>
+                    }
+                    <a href="/book?artistId=@_artist.Id" class="btn btn-primary">
+                        Book with @FirstName
+                    </a>
+                </div>
+            </div>
+
+            <div class="detail-hero-image">
+                <img src="@ProfileImageUrl"
+                     alt="@_artist.Name" />
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio gallery -->
+    <section class="portfolio-section">
+        <div class="container">
+            <OrnamentalDivider Label="Portfolio" />
+            <h2 class="section-title">Work by @FirstName</h2>
+
+            @if (_artist.PortfolioImages.Count == 0)
+            {
+                <p class="empty-state">Portfolio coming soon.</p>
+            }
+            else
+            {
+                <div class="portfolio-grid">
+                    @foreach (var image in _artist.PortfolioImages)
+                    {
+                        <figure class="portfolio-item">
+                            <img src="@image.ImagePath"
+                                 alt="@(image.Caption ?? $"{_artist.Name} — portfolio")"
+                                 loading="lazy" />
+                            @if (!string.IsNullOrWhiteSpace(image.Caption))
+                            {
+                                <figcaption class="portfolio-caption">@image.Caption</figcaption>
+                            }
+                        </figure>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="detail-cta">
+        <div class="container">
+            <h2 class="cta-title">Ready to work with @FirstName?</h2>
+            <p class="cta-text">
+                Submit a booking request and we'll be in touch within 24 hours to
+                confirm the details.
+            </p>
+            <a href="/book?artistId=@_artist.Id" class="btn btn-primary">
+                Book a Consultation
+            </a>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Artist? _artist;
+    private bool _loading = true;
+
+    private string FirstName => _artist?.Name.Split(' ')[0] ?? "this artist";
+
+    private string ProfileImageUrl
+    {
+        get
+        {
+            if (_artist is null) return string.Empty;
+            if (!string.IsNullOrWhiteSpace(_artist.ProfileImagePath))
+                return _artist.ProfileImagePath;
+
+            var placeholders = new[]
+            {
+                "https://images.unsplash.com/photo-1552627019-947c3789ffb5?w=900&h=1100&fit=crop&auto=format",
+                "https://images.unsplash.com/photo-1783973190331-53d4db4f697f?w=900&h=1100&fit=crop&auto=format",
+                "https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=900&h=1100&fit=crop&auto=format",
+            };
+
+            return placeholders[_artist.Id % placeholders.Length];
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _artist = await ArtistService.GetArtistWithPortfolioAsync(Id);
+        _loading = false;
+    }
+}

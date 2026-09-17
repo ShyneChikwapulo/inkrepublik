@@ -1,0 +1,52 @@
+@* =========================================================================
+   ARTIST CARD
+   Reusable card for both the home preview and the /artists listing page.
+   ========================================================================= *@
+
+<article class="artist-card">
+    <a href="/artists/@Artist.Id" class="artist-card-link">
+        <div class="artist-image">
+            <img src="@ImageUrl"
+                 alt="@Artist.Name"
+                 loading="lazy" />
+        </div>
+        <div class="artist-body">
+            @if (!string.IsNullOrWhiteSpace(Artist.Specialties))
+            {
+                <p class="artist-specialty">@Artist.Specialties</p>
+            }
+            <h3 class="artist-name">@Artist.Name</h3>
+            @if (!string.IsNullOrWhiteSpace(Artist.Bio))
+            {
+                <p class="artist-bio">@Artist.Bio</p>
+            }
+            <span class="link-gold">View Portfolio</span>
+        </div>
+    </a>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public Artist Artist { get; set; } = default!;
+
+    /// <summary>
+    /// Image URL for the artist. Uses ProfileImagePath if set,
+    /// otherwise falls back to a deterministic Unsplash placeholder.
+    /// </summary>
+    private string ImageUrl
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Artist.ProfileImagePath))
+                return Artist.ProfileImagePath;
+
+            var placeholders = new[]
+            {
+                "https://images.unsplash.com/photo-1552627019-947c3789ffb5?w=600&h=720&fit=crop&auto=format",
+                "https://images.unsplash.com/photo-1783973190331-53d4db4f697f?w=600&h=720&fit=crop&auto=format",
+                "https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=600&h=720&fit=crop&auto=format",
+            };
+
+            return placeholders[Artist.Id % placeholders.Length];
+        }
+    }
+}

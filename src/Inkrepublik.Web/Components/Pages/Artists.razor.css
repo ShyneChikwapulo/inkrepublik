@@ -1,0 +1,60 @@
+/* ============================================================================
+   ARTISTS LISTING PAGE
+   ============================================================================ */
+
+.page-hero {
+    padding: 6rem 0 4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--c-border-subtle);
+}
+
+.page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+}
+
+.page-lead {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--c-text-muted);
+    font-weight: 300;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.artists-section {
+    padding: var(--space-4xl) 0;
+}
+
+.artists-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.loading,
+.empty-state {
+    text-align: center;
+    color: var(--c-text-dim);
+    padding: 4rem 0;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 1000px) {
+    .artists-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .artists-grid {
+        grid-template-columns: 1fr;
+    }
+}

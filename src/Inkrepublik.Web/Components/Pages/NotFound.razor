@@ -1,5 +1,44 @@
 ﻿@page "/not-found"
 @layout MainLayout
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>Page not found — Inkrepublik</PageTitle>
+
+<section class="not-found">
+    <div class="container">
+        <p class="eyebrow" style="margin-bottom: 1rem;">404</p>
+        <h1 class="not-found-title">Page not found</h1>
+        <p class="not-found-text">
+            The page you're looking for doesn't exist — or hasn't been built yet.
+        </p>
+        <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+</section>
+
+@code {
+}
+
+<style>
+    .not-found {
+        padding: 8rem 0;
+        text-align: center;
+        min-height: 60vh;
+    }
+
+    .not-found-title {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        color: var(--c-text);
+        margin-bottom: 1rem;
+    }
+
+    .not-found-text {
+        font-size: 1rem;
+        color: var(--c-text-muted);
+        font-weight: 300;
+        margin-bottom: 2.5rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
