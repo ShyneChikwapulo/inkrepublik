@@ -1,26 +1,159 @@
 @page "/admin"
 @layout AdminLayout
 @attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@inject IAdminDashboardService DashboardService
+@inject IAdminBookingService BookingService
 
-<PageTitle>Admin — Inkrepublik Tattoo Studio</PageTitle>
+<PageTitle>Dashboard — Inkrepublik Admin</PageTitle>
 
-<h1 class="admin-page-title">Dashboard</h1>
-<p class="admin-page-lead">
-    Welcome back. Real widgets land in Phase 5B.
-</p>
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Dashboard</h1>
+    <p class="admin-page-lead">Everything happening at the studio, at a glance.</p>
+</div>
 
-<section class="admin-welcome">
-    <div class="admin-welcome-card">
-        <h2 class="admin-card-title">What's coming next</h2>
-        <ul class="admin-list">
-            <li>Booking queue — pending requests that need confirmation</li>
-            <li>Today's appointments</li>
-            <li>Unread contact messages</li>
-        </ul>
-    </div>
-</section>
+@if (_loading)
+{
+    <p class="admin-loading">Loading dashboard…</p>
+}
+else if (_stats is null)
+{
+    <p class="admin-loading">No stats available.</p>
+}
+else
+{
+    <!-- Metrics grid -->
+    <section class="metrics-grid">
+        <div class="metric-card @(_stats.PendingBookings > 0 ? "metric-card--attention" : "")">
+            <p class="metric-label">Pending Bookings</p>
+            <p class="metric-value">@_stats.PendingBookings</p>
+            <a href="/admin/bookings?status=Pending" class="metric-link">
+                @(_stats.PendingBookings > 0 ? "Review now →" : "View all →")
+            </a>
+        </div>
+
+        <div class="metric-card">
+            <p class="metric-label">Confirmed Upcoming</p>
+            <p class="metric-value">@_stats.ConfirmedUpcoming</p>
+            <a href="/admin/bookings?status=Confirmed" class="metric-link">View all →</a>
+        </div>
+
+        <div class="metric-card">
+            <p class="metric-label">Today</p>
+            <p class="metric-value">@_stats.TodayBookings</p>
+            <span class="metric-note">bookings scheduled</span>
+        </div>
+
+        <div class="metric-card @(_stats.UnreadMessages > 0 ? "metric-card--attention" : "")">
+            <p class="metric-label">Unread Messages</p>
+            <p class="metric-value">@_stats.UnreadMessages</p>
+            <a href="/admin/messages" class="metric-link">
+                @(_stats.UnreadMessages > 0 ? "Review now →" : "View inbox →")
+            </a>
+        </div>
+    </section>
+
+    <!-- Recent pending bookings -->
+    <section class="dashboard-section">
+        <header class="dashboard-section-header">
+            <h2 class="dashboard-section-title">Latest requests</h2>
+            <a href="/admin/bookings" class="link-gold">View all bookings</a>
+        </header>
+
+        @if (_recentBookings.Count == 0)
+        {
+            <div class="dashboard-empty">
+                <p>No bookings yet. They'll appear here as clients submit requests.</p>
+            </div>
+        }
+        else
+        {
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Preferred</th>
+                            <th>Status</th>
+                            <th>Requested</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in _recentBookings)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="cell-strong">@booking.ClientName</span>
+                                    <span class="cell-muted">@booking.ClientEmail</span>
+                                </td>
+                                <td>
+                                    @booking.PreferredDateTime.ToString("ddd d MMM, HH:mm")
+                                </td>
+                                <td>
+                                    <span class="status-pill status-pill--@booking.Status.ToString().ToLower()">
+                                        @booking.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    @booking.CreatedAt.ToString("d MMM, HH:mm")
+                                </td>
+                                <td class="cell-actions">
+                                    <a href="/admin/bookings/@booking.Id" class="cell-link">View →</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <!-- Studio summary -->
+    <section class="dashboard-section">
+        <header class="dashboard-section-header">
+            <h2 class="dashboard-section-title">Studio at a glance</h2>
+        </header>
+        <div class="summary-strip">
+            <div class="summary-item">
+                <p class="summary-label">Active artists</p>
+                <p class="summary-value">@_stats.TotalArtists</p>
+            </div>
+            <div class="summary-item">
+                <p class="summary-label">Active services</p>
+                <p class="summary-value">@_stats.TotalServices</p>
+            </div>
+            <div class="summary-item">
+                <p class="summary-label">Reviews awaiting approval</p>
+                <p class="summary-value">@_stats.PendingReviews</p>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    private DashboardStats? _stats;
+    private List<BookingRequest> _recentBookings = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var statsTask = DashboardService.GetStatsAsync();
+        var recentTask = BookingService.GetAllAsync();
+
+        await Task.WhenAll(statsTask, recentTask);
+
+        _stats = await statsTask;
+        _recentBookings = (await recentTask).Take(5).ToList();
+        _loading = false;
+    }
+}
 
 <style>
+    .admin-page-header {
+        margin-bottom: 2.5rem;
+    }
+
     .admin-page-title {
         font-family: var(--font-display);
         font-size: 2.25rem;
@@ -34,35 +167,267 @@
         font-size: 0.95rem;
         color: var(--c-text-muted);
         font-weight: 300;
+    }
+
+    .admin-loading {
+        color: var(--c-text-dim);
+        padding: 3rem 0;
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+
+    /* ---------- Metrics grid ---------- */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
         margin-bottom: 3rem;
     }
 
-    .admin-welcome-card {
+    .metric-card {
         background: var(--c-surface);
         border: 1px solid var(--c-border-subtle);
-        padding: 2rem;
-        max-width: 600px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        transition: border-color var(--transition-fast);
     }
 
-    .admin-card-title {
+    .metric-card:hover {
+        border-color: var(--c-border);
+    }
+
+    .metric-card--attention {
+        border-color: var(--c-crimson);
+        background: linear-gradient(180deg, rgba(139, 26, 26, 0.05) 0%, var(--c-surface) 100%);
+    }
+
+    .metric-label {
         font-family: var(--font-heading);
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         font-weight: 600;
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: var(--c-crimson);
+        color: var(--c-text-faint);
+    }
+
+    .metric-value {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--c-text);
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    .metric-link {
+        font-family: var(--font-heading);
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--c-gold);
+        margin-top: auto;
+        padding-top: 0.75rem;
+        transition: color var(--transition-fast);
+    }
+
+    .metric-link:hover {
+        color: var(--c-gold-light);
+    }
+
+    .metric-note {
+        font-size: 0.75rem;
+        color: var(--c-text-faint);
+        font-weight: 300;
+        margin-top: auto;
+        padding-top: 0.75rem;
+    }
+
+    /* ---------- Sections ---------- */
+    .dashboard-section {
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
         margin-bottom: 1.25rem;
+        gap: 1rem;
     }
 
-    .admin-list {
-        padding-left: 1.25rem;
-        margin: 0;
+    .dashboard-section-title {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--c-text);
     }
 
-    .admin-list li {
+    .dashboard-empty {
+        padding: 2.5rem 2rem;
+        text-align: center;
+        background: var(--c-surface);
+        border: 1px solid var(--c-border-subtle);
+        color: var(--c-text-dim);
+        font-size: 0.9rem;
+        font-weight: 300;
+    }
+
+    /* ---------- Table ---------- */
+    .admin-table-wrap {
+        background: var(--c-surface);
+        border: 1px solid var(--c-border-subtle);
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table thead {
+        border-bottom: 1px solid var(--c-border-subtle);
+    }
+
+    .admin-table th {
+        text-align: left;
+        padding: 0.9rem 1.25rem;
+        font-family: var(--font-heading);
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--c-text-faint);
+        background: var(--c-surface-3);
+    }
+
+    .admin-table td {
+        padding: 1rem 1.25rem;
         font-size: 0.9rem;
         color: var(--c-text-muted);
-        line-height: 1.75;
-        font-weight: 300;
+        border-bottom: 1px solid var(--c-border-subtle);
+    }
+
+    .admin-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .admin-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.015);
+    }
+
+    .cell-strong {
+        display: block;
+        font-weight: 500;
+        color: var(--c-text);
+    }
+
+    .cell-muted {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--c-text-faint);
+    }
+
+    .cell-actions {
+        text-align: right;
+    }
+
+    .cell-link {
+        font-family: var(--font-heading);
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--c-gold);
+        transition: color var(--transition-fast);
+    }
+
+    .cell-link:hover {
+        color: var(--c-gold-light);
+    }
+
+    /* ---------- Status pill ---------- */
+    .status-pill {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        font-family: var(--font-heading);
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        border: 1px solid;
+    }
+
+    .status-pill--pending {
+        color: var(--c-gold);
+        border-color: var(--c-gold);
+    }
+
+    .status-pill--confirmed {
+        color: #6fc27c;
+        border-color: #6fc27c;
+    }
+
+    .status-pill--completed {
+        color: var(--c-text-muted);
+        border-color: var(--c-text-muted);
+    }
+
+    .status-pill--declined,
+    .status-pill--cancelled,
+    .status-pill--noshow {
+        color: var(--c-crimson-light);
+        border-color: var(--c-crimson-light);
+    }
+
+    /* ---------- Summary strip ---------- */
+    .summary-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .summary-item {
+        background: var(--c-surface);
+        border: 1px solid var(--c-border-subtle);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .summary-label {
+        font-family: var(--font-heading);
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--c-text-faint);
+        margin-bottom: 0.4rem;
+    }
+
+    .summary-value {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--c-text);
+    }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width: 1100px) {
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .summary-strip {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

@@ -40,6 +40,8 @@ builder.Services.AddScoped<ISiteSettingService, SiteSettingService>();
 builder.Services.AddScoped<IContactService, ContactService>(); 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorPages();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IAdminBookingService, AdminBookingService>();
 
 
 // ------------------------------------------------------------
