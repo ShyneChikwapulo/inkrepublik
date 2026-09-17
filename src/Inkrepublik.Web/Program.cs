@@ -10,12 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ------------------------------------------------------------
 // Database
+//
+// We use AddDbContextFactory (not AddDbContext) because Blazor Server
+// scopes services to the entire circuit, not per-request. Multiple
+// components can call the DB concurrently, and DbContext is NOT
+// thread-safe. The factory lets each operation create its own short-
+// lived context.
 // ------------------------------------------------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' not found in configuration.");
 
-builder.Services.AddDbContext<InkrepublikDbContext>(options =>
+builder.Services.AddDbContextFactory<InkrepublikDbContext>(options =>
     options.UseSqlServer(connectionString));
     // ------------------------------------------------------------
     // Application services (read-side queries)
@@ -43,11 +49,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<InkrepublikDbContext>();
+    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<InkrepublikDbContext>>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     try
     {
+        await using var db = await dbFactory.CreateDbContextAsync();
         await db.Database.MigrateAsync();
         await DbSeeder.SeedAsync(db, logger);
     }

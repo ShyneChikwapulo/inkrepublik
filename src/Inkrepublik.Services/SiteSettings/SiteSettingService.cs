@@ -3,25 +3,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inkrepublik.Services.SiteSettings;
 
-/// <summary>
-/// Read-side queries for site settings (key/value pairs the owner edits).
-/// </summary>
 public interface ISiteSettingService
 {
     Task<string> GetAsync(string key, string fallback = "", CancellationToken ct = default);
-
     Task<Dictionary<string, string>> GetByGroupAsync(string group, CancellationToken ct = default);
 }
 
 public class SiteSettingService : ISiteSettingService
 {
-    private readonly InkrepublikDbContext _db;
+    private readonly IDbContextFactory<InkrepublikDbContext> _factory;
 
-    public SiteSettingService(InkrepublikDbContext db) => _db = db;
+    public SiteSettingService(IDbContextFactory<InkrepublikDbContext> factory)
+        => _factory = factory;
 
     public async Task<string> GetAsync(string key, string fallback = "", CancellationToken ct = default)
     {
-        var setting = await _db.SiteSettings
+        await using var db = await _factory.CreateDbContextAsync(ct);
+        var setting = await db.SiteSettings
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Key == key, ct);
 
@@ -30,7 +28,8 @@ public class SiteSettingService : ISiteSettingService
 
     public async Task<Dictionary<string, string>> GetByGroupAsync(string group, CancellationToken ct = default)
     {
-        return await _db.SiteSettings
+        await using var db = await _factory.CreateDbContextAsync(ct);
+        return await db.SiteSettings
             .AsNoTracking()
             .Where(s => s.Group == group)
             .ToDictionaryAsync(s => s.Key, s => s.Value, ct);
