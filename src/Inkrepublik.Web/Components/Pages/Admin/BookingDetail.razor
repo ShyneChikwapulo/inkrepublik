@@ -1,0 +1,506 @@
+@page "/admin/bookings/{Id:int}"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Options
+@using Inkrepublik.Domain.Enums
+@inject IAdminBookingService BookingService
+@inject IOptions<StudioOptions> StudioOptions
+@inject NavigationManager Nav
+
+<PageTitle>Booking #@Id — Inkrepublik Admin</PageTitle>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading booking…</p>
+}
+else if (_booking is null)
+{
+    <div class="admin-empty">
+        <p class="admin-empty-title">Booking not found</p>
+        <p class="admin-empty-text">Booking #@Id doesn't exist or was deleted.</p>
+        <a href="/admin/bookings" class="btn btn-ghost" style="margin-top: 1.5rem;">← Back to bookings</a>
+    </div>
+}
+else
+{
+    <!-- Breadcrumb -->
+    <p class="admin-breadcrumb">
+        <a href="/admin/bookings">Bookings</a>
+        <span class="admin-breadcrumb-sep">/</span>
+        <span>#@_booking.Id</span>
+    </p>
+
+    <!-- Header -->
+    <div class="detail-header">
+        <div>
+            <h1 class="admin-page-title">@_booking.ClientName</h1>
+            <p class="admin-page-lead">
+                Requested on @_booking.CreatedAt.ToString("d MMMM yyyy 'at' HH:mm")
+            </p>
+        </div>
+        <span class="status-pill status-pill--@_booking.Status.ToString().ToLower()">
+            @_booking.Status
+        </span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_actionMessage))
+    {
+        <div class="action-message @(_actionSuccess ? "action-message--success" : "action-message--error")">
+            @_actionMessage
+        </div>
+    }
+
+    <div class="detail-grid">
+        <!-- Left: booking details -->
+        <div class="detail-main">
+            <section class="detail-section">
+                <h2 class="detail-section-title">Appointment</h2>
+
+                <dl class="detail-list">
+                    <div class="detail-row">
+                        <dt>Preferred</dt>
+                        <dd>@_booking.PreferredDateTime.ToString("dddd, d MMMM yyyy 'at' HH:mm")</dd>
+                    </div>
+                    @if (_booking.ConfirmedDateTime.HasValue)
+                    {
+                        <div class="detail-row">
+                            <dt>Confirmed</dt>
+                            <dd>@_booking.ConfirmedDateTime.Value.ToString("dddd, d MMMM yyyy 'at' HH:mm")</dd>
+                        </div>
+                    }
+                    <div class="detail-row">
+                        <dt>Artist</dt>
+                        <dd>@(_booking.Artist?.Name ?? "Any")</dd>
+                    </div>
+                    <div class="detail-row">
+                        <dt>Service</dt>
+                        <dd>@(_booking.Service?.Name ?? "Not specified")</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="detail-section">
+                <h2 class="detail-section-title">Client</h2>
+                <dl class="detail-list">
+                    <div class="detail-row">
+                        <dt>Name</dt>
+                        <dd>@_booking.ClientName</dd>
+                    </div>
+                    <div class="detail-row">
+                        <dt>Email</dt>
+                        <dd><a href="mailto:@_booking.ClientEmail" class="detail-link">@_booking.ClientEmail</a></dd>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_booking.ClientPhone))
+                    {
+                        <div class="detail-row">
+                            <dt>Phone</dt>
+                            <dd><a href="tel:@_booking.ClientPhone" class="detail-link">@_booking.ClientPhone</a></dd>
+                        </div>
+                    }
+                </dl>
+            </section>
+
+            <section class="detail-section">
+                <h2 class="detail-section-title">Description</h2>
+                <p class="detail-description">@_booking.Description</p>
+            </section>
+
+            <section class="detail-section">
+                <h2 class="detail-section-title">Owner notes</h2>
+                <p class="detail-section-hint">Private — never shown to the client.</p>
+                <textarea class="form-control"
+                          rows="3"
+                          placeholder="Add any internal notes about this booking…"
+                          @bind="_ownerNotes"></textarea>
+                <button class="btn btn-ghost detail-save-notes"
+                        @onclick="SaveNotes"
+                        disabled="@_processing">
+                    Save Notes
+                </button>
+            </section>
+        </div>
+
+        <!-- Right: actions -->
+        <aside class="detail-sidebar">
+            <div class="action-panel">
+                <h3 class="action-panel-title">Actions</h3>
+
+                @if (_booking.Status == BookingStatus.Pending)
+                {
+                    <p class="action-panel-hint">This booking is awaiting your decision.</p>
+
+                    <button class="btn btn-primary action-btn" @onclick="StartConfirm" disabled="@_processing">
+                        Confirm Booking
+                    </button>
+                    <button class="btn btn-ghost action-btn" @onclick="StartDecline" disabled="@_processing">
+                        Decline
+                    </button>
+                }
+                else if (_booking.Status == BookingStatus.Confirmed)
+                {
+                    <p class="action-panel-hint">
+                        Confirmed for
+                        @_booking.ConfirmedDateTime?.ToString("d MMMM, HH:mm").
+                    </p>
+
+                    <button class="btn btn-primary action-btn" @onclick="StartReschedule" disabled="@_processing">
+                        Reschedule
+                    </button>
+                    <button class="btn btn-ghost action-btn" @onclick="MarkComplete" disabled="@_processing">
+                        Mark Complete
+                    </button>
+                    <button class="btn btn-ghost action-btn" @onclick="MarkNoShow" disabled="@_processing">
+                        Mark No-Show
+                    </button>
+                }
+                else
+                {
+                    <p class="action-panel-hint">
+                        This booking is @_booking.Status.ToString().ToLower()
+                        and can't be modified.
+                    </p>
+                }
+            </div>
+
+            @if (_booking.Status == BookingStatus.Confirmed && _booking.MagicTokenExpiresAt > DateTime.UtcNow)
+            {
+                <div class="action-panel action-panel--subtle">
+                    <h3 class="action-panel-title">Client link</h3>
+                    <p class="action-panel-hint">
+                        Send this to the client if they need to manage their booking:
+                    </p>
+                    <p class="magic-link-preview">
+                        /booking/status/@_booking.MagicToken[..12]…
+                    </p>
+                </div>
+            }
+        </aside>
+    </div>
+
+    <!-- Confirm dialog (inline) -->
+    @if (_mode == ActionMode.Confirm || _mode == ActionMode.Reschedule)
+    {
+        <div class="modal-backdrop" @onclick="CloseModal">
+            <div class="modal" @onclick:stopPropagation="true">
+                <h3 class="modal-title">
+                    @(_mode == ActionMode.Confirm ? "Confirm Booking" : "Reschedule Booking")
+                </h3>
+                <p class="modal-text">
+                    @(_mode == ActionMode.Confirm
+                        ? "Confirm this booking for the requested time, or pick a new one."
+                        : "Pick a new time for this booking.")
+                </p>
+
+                <div class="modal-grid">
+                    <div class="form-field">
+                        <label class="form-label" for="confirm-date">Date</label>
+                        <InputSelect id="confirm-date" class="form-control" @bind-Value="_confirmDate">
+                            @foreach (var date in _availableDates)
+                            {
+                                <option value="@date.ToString("yyyy-MM-dd")">
+                                    @date.ToString("dddd, d MMMM")
+                                </option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="confirm-time">Time</label>
+                        <InputSelect id="confirm-time" class="form-control" @bind-Value="_confirmTime">
+                            @foreach (var time in _availableTimes)
+                            {
+                                <option value="@time.ToString("HH:mm")">@time.ToString("HH:mm")</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-primary" @onclick="ConfirmBooking" disabled="@_processing">
+                        @(_processing ? "Saving…" : "Confirm")
+                    </button>
+                    <button class="btn btn-ghost" @onclick="CloseModal" disabled="@_processing">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Decline dialog (inline) -->
+    @if (_mode == ActionMode.Decline)
+    {
+        <div class="modal-backdrop" @onclick="CloseModal">
+            <div class="modal" @onclick:stopPropagation="true">
+                <h3 class="modal-title">Decline Booking</h3>
+                <p class="modal-text">
+                    Optionally add a note for the client explaining why. This
+                    will be included in the email they receive.
+                </p>
+
+                <div class="form-field">
+                    <label class="form-label" for="decline-reason">Reason (optional)</label>
+                    <InputTextArea id="decline-reason" class="form-control" rows="3"
+                                   @bind-Value="_declineReason"
+                                   placeholder="e.g. Slot already taken, please try another date" />
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-primary" @onclick="DeclineBooking" disabled="@_processing">
+                        @(_processing ? "Sending…" : "Decline and Notify Client")
+                    </button>
+                    <button class="btn btn-ghost" @onclick="CloseModal" disabled="@_processing">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private BookingRequest? _booking;
+    private bool _loading = true;
+    private bool _processing;
+
+    private string _ownerNotes = string.Empty;
+    private string _declineReason = string.Empty;
+
+    private string? _actionMessage;
+    private bool _actionSuccess;
+
+    private List<DateOnly> _availableDates = [];
+    private List<TimeOnly> _availableTimes = [];
+    private DateOnly _confirmDate;
+    private TimeOnly _confirmTime;
+
+    private enum ActionMode { None, Confirm, Reschedule, Decline }
+    private ActionMode _mode = ActionMode.None;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _booking = await BookingService.GetByIdAsync(Id);
+        _loading = false;
+
+        if (_booking is not null)
+        {
+            _ownerNotes = _booking.OwnerNotes ?? string.Empty;
+            _availableDates = BuildAvailableDates();
+            _availableTimes = BuildAvailableTimes();
+
+            var preferredDate = DateOnly.FromDateTime(_booking.PreferredDateTime);
+            var preferredTime = TimeOnly.FromDateTime(_booking.PreferredDateTime);
+
+            _confirmDate = _availableDates.Contains(preferredDate)
+                ? preferredDate
+                : _availableDates.FirstOrDefault();
+            _confirmTime = _availableTimes.Contains(preferredTime)
+                ? preferredTime
+                : _availableTimes.FirstOrDefault();
+        }
+    }
+
+    private void StartConfirm()
+    {
+        _mode = ActionMode.Confirm;
+        _actionMessage = null;
+    }
+
+    private void StartReschedule()
+    {
+        _mode = ActionMode.Reschedule;
+        _actionMessage = null;
+    }
+
+    private void StartDecline()
+    {
+        _mode = ActionMode.Decline;
+        _declineReason = string.Empty;
+        _actionMessage = null;
+    }
+
+    private void CloseModal()
+    {
+        _mode = ActionMode.None;
+    }
+
+    private async Task ConfirmBooking()
+    {
+        if (_booking is null) return;
+
+        _processing = true;
+        try
+        {
+            var confirmedAt = _confirmDate.ToDateTime(_confirmTime).ToUniversalTime();
+            var options = StudioOptions.Value;
+
+            var ok = await BookingService.ConfirmAsync(
+                _booking.Id,
+                confirmedAt,
+                _booking.OwnerNotes,
+                options.PublicBaseUrl);
+
+            if (ok)
+            {
+                await ReloadAsync();
+                _actionSuccess = true;
+                _actionMessage = "Booking confirmed and client notified.";
+                _mode = ActionMode.None;
+            }
+            else
+            {
+                ShowError("Couldn't confirm this booking. Please try again.");
+            }
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task DeclineBooking()
+    {
+        if (_booking is null) return;
+
+        _processing = true;
+        try
+        {
+            var ok = await BookingService.DeclineAsync(_booking.Id, _declineReason);
+
+            if (ok)
+            {
+                await ReloadAsync();
+                _actionSuccess = true;
+                _actionMessage = "Booking declined and client notified.";
+                _mode = ActionMode.None;
+            }
+            else
+            {
+                ShowError("Couldn't decline this booking. Please try again.");
+            }
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task MarkComplete()
+    {
+        if (_booking is null) return;
+
+        _processing = true;
+        try
+        {
+            var options = StudioOptions.Value;
+            var ok = await BookingService.MarkCompleteAsync(_booking.Id, options.PublicBaseUrl);
+
+            if (ok)
+            {
+                await ReloadAsync();
+                _actionSuccess = true;
+                _actionMessage = "Marked complete. Aftercare email sent.";
+            }
+            else
+            {
+                ShowError("Couldn't update this booking.");
+            }
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task MarkNoShow()
+    {
+        if (_booking is null) return;
+
+        _processing = true;
+        try
+        {
+            var ok = await BookingService.MarkNoShowAsync(_booking.Id);
+
+            if (ok)
+            {
+                await ReloadAsync();
+                _actionSuccess = true;
+                _actionMessage = "Marked as no-show.";
+            }
+            else
+            {
+                ShowError("Couldn't update this booking.");
+            }
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task SaveNotes()
+    {
+        if (_booking is null) return;
+
+        _processing = true;
+        try
+        {
+            var ok = await BookingService.UpdateOwnerNotesAsync(_booking.Id, _ownerNotes);
+            if (ok)
+            {
+                _actionSuccess = true;
+                _actionMessage = "Notes saved.";
+            }
+            else
+            {
+                ShowError("Couldn't save notes.");
+            }
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _booking = await BookingService.GetByIdAsync(Id);
+        if (_booking is not null)
+        {
+            _ownerNotes = _booking.OwnerNotes ?? string.Empty;
+        }
+    }
+
+    private void ShowError(string message)
+    {
+        _actionSuccess = false;
+        _actionMessage = message;
+    }
+
+    // Same date/time dropdowns as elsewhere — kept consistent.
+    private static List<DateOnly> BuildAvailableDates()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var dates = new List<DateOnly>();
+        for (var i = 0; i <= 90; i++)
+        {
+            var date = today.AddDays(i);
+            if (date.DayOfWeek == DayOfWeek.Sunday) continue;
+            dates.Add(date);
+        }
+        return dates;
+    }
+
+    private static List<TimeOnly> BuildAvailableTimes()
+    {
+        var times = new List<TimeOnly>();
+        for (var t = new TimeOnly(10, 0); t <= new TimeOnly(17, 0); t = t.AddMinutes(30))
+            times.Add(t);
+        return times;
+    }
+}
