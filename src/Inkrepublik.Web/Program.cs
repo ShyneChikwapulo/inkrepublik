@@ -12,6 +12,7 @@ using Inkrepublik.Services;
 using Inkrepublik.Services.Admin;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Inkrepublik.Services.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,14 @@ builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IAdminBookingService, AdminBookingService>();
 builder.Services.AddScoped<IAdminCalendarService, AdminCalendarService>();
 builder.Services.AddScoped<IAdminServiceCatalogService, AdminServiceCatalogService>();
+builder.Services.AddScoped<IAdminArtistService, AdminArtistService>();
+
+// ------------------------------------------------------------
+// File storage
+// ------------------------------------------------------------
+var uploadsRoot = Path.Combine(builder.Environment.WebRootPath, "uploads");
+builder.Services.AddSingleton<IFileStorage>(sp =>
+    new LocalFileStorage(uploadsRoot, sp.GetRequiredService<ILogger<LocalFileStorage>>()));
 
 
 // ------------------------------------------------------------
