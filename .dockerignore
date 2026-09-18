@@ -1,0 +1,44 @@
+# Build output — will be rebuilt inside the container
+**/bin/
+**/obj/
+**/out/
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docs and tooling (not needed in the image)
+*.md
+!.README.md
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+
+# User uploads — should not be baked into the image
+src/Inkrepublik.Web/wwwroot/uploads/*
+!src/Inkrepublik.Web/wwwroot/uploads/.gitkeep
+
+# Local config with secrets
+.env
+.env.*
+appsettings.Local.json
+appsettings.Development.Local.json
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# OS junk
+.DS_Store
+Thumbs.db

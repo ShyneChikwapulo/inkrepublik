@@ -52,6 +52,8 @@ else
         options.UseSqlServer(connectionString));
 
     Console.WriteLine("✓ Database provider: SqlServer");
+    Console.WriteLine($"✓ Content root: {builder.Environment.ContentRootPath}");
+    Console.WriteLine($"✓ Environment: {builder.Environment.EnvironmentName}");
 }
     // ------------------------------------------------------------
     // Application services (read-side queries)
