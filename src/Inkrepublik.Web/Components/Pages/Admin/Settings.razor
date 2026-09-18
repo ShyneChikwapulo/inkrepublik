@@ -1,0 +1,116 @@
+@page "/admin/settings"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@inject IAdminSiteSettingService SettingsAdmin
+
+<PageTitle>Site Settings — Inkrepublik Admin</PageTitle>
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Site Settings</h1>
+        <p class="admin-page-lead">
+            Site-wide content used across the public site — address, hours, socials, and copy.
+        </p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div class="action-message @(_messageIsSuccess ? "action-message--success" : "action-message--error")">
+        @_message
+    </div>
+}
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading settings…</p>
+}
+else
+{
+    @foreach (var group in _grouped)
+    {
+        <section class="settings-group">
+            <h2 class="settings-group-title">@group.Key</h2>
+
+            <div class="settings-list">
+                @foreach (var setting in group.Value)
+                {
+                    <div class="setting-row">
+                        <div class="setting-meta">
+                            <label class="setting-key" for="s-@setting.Id">@setting.Key</label>
+                            @if (!string.IsNullOrWhiteSpace(setting.Description))
+                            {
+                                <p class="setting-desc">@setting.Description</p>
+                            }
+                        </div>
+
+                        <div class="setting-value">
+                            <textarea class="form-control"
+                                      id="s-@setting.Id"
+                                      rows="2"
+                                      @bind="_editValues[setting.Id]"
+                                      @bind:event="oninput"
+                                      @onchange="() => Save(setting)"></textarea>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+}
+
+@code {
+    private List<SiteSetting> _settings = [];
+    private Dictionary<string, List<SiteSetting>> _grouped = new();
+    private Dictionary<int, string> _editValues = new();
+    private bool _loading = true;
+    private string? _message;
+    private bool _messageIsSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _settings = await SettingsAdmin.GetAllAsync();
+
+        _grouped = _settings
+            .GroupBy(s => string.IsNullOrWhiteSpace(s.Group) ? "General" : s.Group!)
+            .OrderBy(g => g.Key)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        _editValues = _settings.ToDictionary(s => s.Id, s => s.Value);
+
+        _loading = false;
+    }
+
+    private async Task Save(SiteSetting setting)
+    {
+        if (!_editValues.TryGetValue(setting.Id, out var newValue))
+            return;
+
+        if (setting.Value == newValue)
+            return;
+
+        _message = null;
+
+        try
+        {
+            await SettingsAdmin.UpsertAsync(setting.Key, newValue);
+            setting.Value = newValue;
+            _messageIsSuccess = true;
+            _message = $"Saved \"{setting.Key}\".";
+        }
+        catch (Exception ex)
+        {
+            _messageIsSuccess = false;
+            _message = "Couldn't save that setting.";
+            Console.Error.WriteLine(ex);
+        }
+    }
+}

@@ -1,0 +1,191 @@
+@page "/admin/messages"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@inject IAdminContactService ContactAdmin
+
+<PageTitle>Messages — Inkrepublik Admin</PageTitle>
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Messages</h1>
+        <p class="admin-page-lead">Enquiries from the contact form.</p>
+    </div>
+</div>
+
+<div class="filter-tabs">
+    <button class="tab @(GetTabClass("unread"))" @onclick="ShowUnread">
+        Unread (@_unreadCount)
+    </button>
+    <button class="tab @(GetTabClass("handled"))" @onclick="ShowHandled">
+        Handled (@_handledCount)
+    </button>
+    <button class="tab @(GetTabClass("all"))" @onclick="ShowAll">
+        All (@_messages.Count)
+    </button>
+</div>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading messages…</p>
+}
+else if (_filtered.Count == 0)
+{
+    <div class="admin-empty">
+        <p class="admin-empty-title">Nothing to show</p>
+        <p class="admin-empty-text">
+            @if (_tab == "unread")
+            {
+                <text>You're all caught up.</text>
+            }
+            else
+            {
+                <text>No messages match this filter.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="messages-list">
+        @foreach (var msg in _filtered)
+        {
+            <article class="message-row @(msg.IsHandled ? "message-row--handled" : "")">
+                <div class="message-head">
+                    <div>
+                        <p class="message-subject">@msg.Subject</p>
+                        <p class="message-meta">
+                            <strong>@msg.Name</strong>
+                            <span>·</span>
+                            <a href="mailto:@msg.Email" class="message-email">@msg.Email</a>
+                            @if (!string.IsNullOrWhiteSpace(msg.Phone))
+                            {
+                                <span>·</span>
+                                <a href="tel:@msg.Phone" class="message-email">@msg.Phone</a>
+                            }
+                            <span>·</span>
+                            <span>@msg.CreatedAt.ToString("d MMM yyyy, HH:mm")</span>
+                        </p>
+                    </div>
+
+                    <div class="message-actions">
+                        @if (msg.IsHandled)
+                        {
+                            <span class="badge badge--handled">Handled</span>
+                            <button class="action-link" @onclick="() => ToggleHandled(msg, false)" disabled="@_busy">
+                                Mark unread
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="badge badge--unread">Unread</span>
+                            <button class="action-link action-link--approve" @onclick="() => ToggleHandled(msg, true)" disabled="@_busy">
+                                Mark handled
+                            </button>
+                        }
+                        <button class="action-link action-link--danger" @onclick="() => Delete(msg)" disabled="@_busy">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+
+                <div class="message-body">
+                    @msg.Message
+                </div>
+
+                <div class="message-notes">
+                    <label class="message-notes-label">Notes</label>
+                    <textarea class="form-control"
+                              rows="2"
+                              placeholder="Add internal notes…"
+                              value="@msg.OwnerNotes"
+                              @onchange="e => SaveNotes(msg, e.Value?.ToString())"></textarea>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    private List<ContactMessage> _messages = [];
+    private List<ContactMessage> _filtered = [];
+    private string _tab = "unread";
+    private bool _loading = true;
+    private bool _busy;
+
+    private int _unreadCount => _messages.Count(m => !m.IsHandled);
+    private int _handledCount => _messages.Count(m => m.IsHandled);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _messages = await ContactAdmin.GetAllAsync();
+        ApplyFilter();
+        _loading = false;
+    }
+
+    private void ShowUnread() => SetTab("unread");
+    private void ShowHandled() => SetTab("handled");
+    private void ShowAll() => SetTab("all");
+
+    private void SetTab(string tab)
+    {
+        _tab = tab;
+        ApplyFilter();
+    }
+
+    private string GetTabClass(string tab)
+        => _tab == tab ? "is-active" : string.Empty;
+
+    private void ApplyFilter()
+    {
+        _filtered = _tab switch
+        {
+            "unread" => _messages.Where(m => !m.IsHandled).ToList(),
+            "handled" => _messages.Where(m => m.IsHandled).ToList(),
+            _ => _messages,
+        };
+    }
+
+    private async Task ToggleHandled(ContactMessage msg, bool handled)
+    {
+        _busy = true;
+        try
+        {
+            await ContactAdmin.SetHandledAsync(msg.Id, handled);
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveNotes(ContactMessage msg, string? notes)
+    {
+        if (msg.OwnerNotes == notes) return;
+
+        await ContactAdmin.UpdateOwnerNotesAsync(msg.Id, notes);
+        msg.OwnerNotes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+    }
+
+    private async Task Delete(ContactMessage msg)
+    {
+        _busy = true;
+        try
+        {
+            await ContactAdmin.DeleteAsync(msg.Id);
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

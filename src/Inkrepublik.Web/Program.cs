@@ -49,6 +49,8 @@ builder.Services.AddScoped<IAdminCalendarService, AdminCalendarService>();
 builder.Services.AddScoped<IAdminServiceCatalogService, AdminServiceCatalogService>();
 builder.Services.AddScoped<IAdminArtistService, AdminArtistService>();
 builder.Services.AddScoped<IAdminReviewService, AdminReviewService>();
+builder.Services.AddScoped<IAdminContactService, AdminContactService>();
+builder.Services.AddScoped<IAdminSiteSettingService, AdminSiteSettingService>();
 
 // ------------------------------------------------------------
 // File storage
