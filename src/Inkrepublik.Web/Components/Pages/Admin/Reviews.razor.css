@@ -1,0 +1,254 @@
+/* ============================================================================
+   ADMIN REVIEWS LIST
+   ============================================================================ */
+
+.admin-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.admin-page-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+}
+
+.admin-page-lead {
+    font-size: 0.95rem;
+    color: var(--c-text-muted);
+    font-weight: 300;
+}
+
+.admin-loading {
+    color: var(--c-text-dim);
+    padding: 3rem 0;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.admin-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+}
+
+.admin-empty-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.admin-empty-text {
+    font-size: 0.9rem;
+    color: var(--c-text-faint);
+    font-weight: 300;
+}
+
+/* ---------- Tabs ---------- */
+.filter-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.tab {
+    background: transparent;
+    border: 1px solid var(--c-border-subtle);
+    color: var(--c-text-dim);
+    padding: 0.5rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tab:hover {
+    color: var(--c-text);
+    border-color: var(--c-border);
+}
+
+.tab.is-active {
+    color: var(--c-text);
+    background: var(--c-crimson);
+    border-color: var(--c-crimson);
+}
+
+/* ---------- Review list ---------- */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.review-row {
+    display: grid;
+    grid-template-columns: 110px 1fr auto auto;
+    gap: 1.5rem;
+    align-items: start;
+    padding: 1.5rem;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+    transition: border-color var(--transition-fast);
+}
+
+.review-row:hover {
+    border-color: var(--c-border);
+}
+
+.review-row--pending {
+    border-left: 3px solid var(--c-gold);
+}
+
+.review-stars {
+    letter-spacing: 0.15em;
+    font-size: 0.95rem;
+}
+
+.star-filled { color: var(--c-gold); }
+.star-empty { color: #333333; }
+
+.review-main {
+    min-width: 0;
+}
+
+.review-text {
+    font-size: 0.9rem;
+    color: var(--c-text-muted);
+    line-height: 1.7;
+    font-weight: 300;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+    word-break: break-word;
+}
+
+.review-meta {
+    font-size: 0.78rem;
+    color: var(--c-text-faint);
+}
+
+.review-meta strong {
+    color: var(--c-text);
+    font-weight: 500;
+}
+
+.review-meta span {
+    margin-left: 0.4rem;
+}
+
+/* ---------- Badges ---------- */
+.review-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: flex-start;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid;
+    white-space: nowrap;
+}
+
+.badge--approved {
+    color: #6fc27c;
+    border-color: #6fc27c;
+}
+
+.badge--pending {
+    color: var(--c-gold);
+    border-color: var(--c-gold);
+}
+
+.badge--featured {
+    color: var(--c-crimson-light);
+    border-color: var(--c-crimson-light);
+}
+
+/* ---------- Actions ---------- */
+.review-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: flex-end;
+}
+
+.action-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-gold);
+    transition: color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.action-link:hover {
+    color: var(--c-gold-light);
+}
+
+.action-link--approve {
+    color: #6fc27c;
+}
+
+.action-link--approve:hover {
+    color: #8ad694;
+}
+
+.action-link--danger {
+    color: var(--c-crimson-light);
+}
+
+.action-link--danger:hover {
+    color: #e64a4a;
+}
+
+.action-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .review-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .review-actions {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .review-badges {
+        flex-direction: row;
+    }
+}

@@ -1,0 +1,223 @@
+@page "/admin/reviews"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@inject IAdminReviewService ReviewAdmin
+
+<PageTitle>Reviews — Inkrepublik Admin</PageTitle>
+
+<div class="admin-page-header">
+    <div>
+        <h1 class="admin-page-title">Reviews</h1>
+        <p class="admin-page-lead">Approve, feature, or edit client testimonials.</p>
+    </div>
+    <a href="/admin/reviews/new" class="btn btn-primary">+ Add Review</a>
+</div>
+
+<div class="filter-tabs">
+    <button class="tab @(GetTabClass("pending"))" @onclick="ShowPending">
+        Pending (@_pendingCount)
+    </button>
+    <button class="tab @(GetTabClass("approved"))" @onclick="ShowApproved">
+        Approved (@_approvedCount)
+    </button>
+    <button class="tab @(GetTabClass("featured"))" @onclick="ShowFeatured">
+        Featured (@_featuredCount)
+    </button>
+    <button class="tab @(GetTabClass("all"))" @onclick="ShowAll">
+        All (@_reviews.Count)
+    </button>
+</div>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading reviews…</p>
+}
+else if (_filtered.Count == 0)
+{
+    <div class="admin-empty">
+        <p class="admin-empty-title">Nothing to show</p>
+        <p class="admin-empty-text">
+            @if (_tab == "pending")
+            {
+                <text>No reviews are pending approval.</text>
+            }
+            else
+            {
+                <text>No reviews match this filter.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="reviews-list">
+        @foreach (var review in _filtered)
+        {
+            <article class="review-row @(review.IsApproved ? "" : "review-row--pending")">
+                <div class="review-stars">
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <span class="star @(i < review.Rating ? "star-filled" : "star-empty")">★</span>
+                    }
+                </div>
+
+                <div class="review-main">
+                    <p class="review-text">"@review.Text"</p>
+                    <p class="review-meta">
+                        <strong>@review.ClientName</strong>
+                        @if (!string.IsNullOrWhiteSpace(review.Source))
+                        {
+                            <span>· via @review.Source</span>
+                        }
+                        @if (review.ReviewedOn.HasValue)
+                        {
+                            <span>· @review.ReviewedOn.Value.ToString("d MMM yyyy")</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="review-badges">
+                    @if (review.IsApproved)
+                    {
+                        <span class="badge badge--approved">Approved</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge--pending">Pending</span>
+                    }
+                    @if (review.IsFeatured)
+                    {
+                        <span class="badge badge--featured">Featured</span>
+                    }
+                </div>
+
+                <div class="review-actions">
+                    @if (!review.IsApproved)
+                    {
+                        <button class="action-link action-link--approve"
+                                @onclick="() => ToggleApproved(review, true)"
+                                disabled="@_busy">
+                            Approve
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="action-link"
+                                @onclick="() => ToggleApproved(review, false)"
+                                disabled="@_busy">
+                            Unapprove
+                        </button>
+
+                        <button class="action-link"
+                                @onclick="() => ToggleFeatured(review, !review.IsFeatured)"
+                                disabled="@_busy">
+                            @(review.IsFeatured ? "Unfeature" : "Feature")
+                        </button>
+                    }
+
+                    <a href="/admin/reviews/@review.Id" class="action-link">Edit</a>
+
+                    <button class="action-link action-link--danger"
+                            @onclick="() => Delete(review)"
+                            disabled="@_busy">
+                        Delete
+                    </button>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    private List<Review> _reviews = [];
+    private List<Review> _filtered = [];
+    private string _tab = "pending";
+    private bool _loading = true;
+    private bool _busy;
+
+    private int _pendingCount => _reviews.Count(r => !r.IsApproved);
+    private int _approvedCount => _reviews.Count(r => r.IsApproved);
+    private int _featuredCount => _reviews.Count(r => r.IsFeatured);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _reviews = await ReviewAdmin.GetAllAsync();
+        ApplyFilter();
+        _loading = false;
+    }
+
+    private void ShowPending() => SetTab("pending");
+    private void ShowApproved() => SetTab("approved");
+    private void ShowFeatured() => SetTab("featured");
+    private void ShowAll() => SetTab("all");
+
+    private void SetTab(string tab)
+    {
+        _tab = tab;
+        ApplyFilter();
+    }
+
+    private string GetTabClass(string tab)
+        => _tab == tab ? "is-active" : string.Empty;
+
+    private void ApplyFilter()
+    {
+        _filtered = _tab switch
+        {
+            "pending" => _reviews.Where(r => !r.IsApproved).ToList(),
+            "approved" => _reviews.Where(r => r.IsApproved).ToList(),
+            "featured" => _reviews.Where(r => r.IsFeatured).ToList(),
+            _ => _reviews,
+        };
+    }
+
+    private async Task ToggleApproved(Review review, bool approved)
+    {
+        _busy = true;
+        try
+        {
+            await ReviewAdmin.SetApprovedAsync(review.Id, approved);
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ToggleFeatured(Review review, bool featured)
+    {
+        _busy = true;
+        try
+        {
+            await ReviewAdmin.SetFeaturedAsync(review.Id, featured);
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task Delete(Review review)
+    {
+        _busy = true;
+        try
+        {
+            await ReviewAdmin.DeleteAsync(review.Id);
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,272 @@
+@page "/admin/reviews/new"
+@page "/admin/reviews/{Id:int}"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject IAdminReviewService ReviewAdmin
+@inject NavigationManager Nav
+
+<PageTitle>@(IsNew ? "New Review" : "Edit Review") — Inkrepublik Admin</PageTitle>
+
+<p class="admin-breadcrumb">
+    <a href="/admin/reviews">Reviews</a>
+    <span class="admin-breadcrumb-sep">/</span>
+    <span>@(IsNew ? "New" : $"#{Id}")</span>
+</p>
+
+<div class="admin-page-header">
+    <h1 class="admin-page-title">@(IsNew ? "New Review" : "Edit Review")</h1>
+</div>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading…</p>
+}
+else if (!IsNew && !_exists)
+{
+    <div class="admin-empty">
+        <p class="admin-empty-title">Review not found</p>
+        <a href="/admin/reviews" class="btn btn-ghost" style="margin-top: 1.5rem;">← Back to reviews</a>
+    </div>
+}
+else
+{
+    <div class="edit-layout">
+        <div class="edit-main">
+            <section class="edit-section">
+                <EditForm Model="_form" OnValidSubmit="SaveAsync" FormName="review-edit">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label" for="rev-name">Client name *</label>
+                            <InputText id="rev-name" class="form-control" @bind-Value="_form.ClientName" />
+                            <ValidationMessage For="() => _form.ClientName" />
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label" for="rev-source">Source</label>
+                            <InputText id="rev-source" class="form-control"
+                                       @bind-Value="_form.Source"
+                                       placeholder="e.g. Google, Facebook, Walk-in" />
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label" for="rev-rating">Rating *</label>
+                            <InputSelect id="rev-rating" class="form-control" @bind-Value="_form.Rating">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <option value="@i">@i star@(i == 1 ? "" : "s")</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label" for="rev-date">Reviewed on</label>
+                            <InputDate id="rev-date" class="form-control" @bind-Value="_form.ReviewedOn" />
+                            <p class="form-hint">Optional. If unknown, leave blank.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="rev-text">Review text *</label>
+                        <InputTextArea id="rev-text" class="form-control" rows="6"
+                                       @bind-Value="_form.Text" />
+                        <ValidationMessage For="() => _form.Text" />
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label" for="rev-order">Display order</label>
+                            <InputNumber id="rev-order" class="form-control" @bind-Value="_form.DisplayOrder" />
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label">Visibility</label>
+                            <label class="form-checkbox">
+                                <InputCheckbox @bind-Value="_form.IsApproved" />
+                                <span>Approved (visible on public site)</span>
+                            </label>
+                            <label class="form-checkbox">
+                                <InputCheckbox @bind-Value="_form.IsFeatured" disabled="@(!_form.IsApproved)" />
+                                <span>Featured (shown on home page)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <p class="form-error">@_errorMessage</p>
+                    }
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" disabled="@_saving">
+                            @(_saving ? "Saving…" : (IsNew ? "Create Review" : "Save Changes"))
+                        </button>
+                        <a href="/admin/reviews" class="btn btn-ghost">Back</a>
+                    </div>
+                </EditForm>
+            </section>
+        </div>
+
+        <aside class="edit-sidebar">
+            <div class="edit-sidebar-block">
+                <h3 class="edit-sidebar-title">Preview</h3>
+                <div class="review-card-preview">
+                    <div class="preview-stars">
+                        @for (var i = 0; i < 5; i++)
+                        {
+                            <span class="star @(i < _form.Rating ? "star-filled" : "star-empty")">★</span>
+                        }
+                    </div>
+                    <p class="preview-text">
+                        "@(string.IsNullOrWhiteSpace(_form.Text) ? "Review text will appear here…" : Truncate(_form.Text, 200))"
+                    </p>
+                    <p class="preview-author">
+                        — @(string.IsNullOrWhiteSpace(_form.ClientName) ? "Client name" : _form.ClientName)
+                    </p>
+                    @if (!string.IsNullOrWhiteSpace(_form.Source))
+                    {
+                        <p class="preview-source">via @_form.Source</p>
+                    }
+                </div>
+            </div>
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private ReviewForm _form = new();
+    private bool _loading = true;
+    private bool _saving;
+    private bool _exists = true;
+    private string? _errorMessage;
+
+    private bool IsNew => !Id.HasValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+
+        if (IsNew)
+        {
+            _form = new ReviewForm
+            {
+                Rating = 5,
+                IsApproved = true,
+                DisplayOrder = 100,
+            };
+        }
+        else
+        {
+            var review = await ReviewAdmin.GetByIdAsync(Id!.Value);
+            if (review is null)
+            {
+                _exists = false;
+            }
+            else
+            {
+                _form = ReviewForm.FromEntity(review);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _errorMessage = null;
+
+        try
+        {
+            // Featured only makes sense on approved reviews.
+            if (!_form.IsApproved) _form.IsFeatured = false;
+
+            if (IsNew)
+            {
+                var created = await ReviewAdmin.CreateAsync(_form.ToEntity());
+                Nav.NavigateTo($"/admin/reviews/{created.Id}");
+            }
+            else
+            {
+                var entity = _form.ToEntity();
+                entity.Id = Id!.Value;
+                var ok = await ReviewAdmin.UpdateAsync(entity);
+
+                if (!ok)
+                {
+                    _errorMessage = "Couldn't save changes.";
+                    return;
+                }
+
+                Nav.NavigateTo("/admin/reviews");
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Something went wrong saving the review.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string Truncate(string s, int max)
+        => s.Length <= max ? s : s[..max] + "…";
+
+    public class ReviewForm
+    {
+        [Required(ErrorMessage = "Client name is required.")]
+        [StringLength(120)]
+        public string ClientName { get; set; } = string.Empty;
+
+        [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]
+        public int Rating { get; set; } = 5;
+
+        [Required(ErrorMessage = "Review text is required.")]
+        [StringLength(2000, MinimumLength = 10)]
+        public string Text { get; set; } = string.Empty;
+
+        [StringLength(60)]
+        public string? Source { get; set; }
+
+        public DateTime? ReviewedOn { get; set; }
+
+        public bool IsApproved { get; set; }
+        public bool IsFeatured { get; set; }
+        public int DisplayOrder { get; set; }
+
+        public static ReviewForm FromEntity(Review r) => new()
+        {
+            ClientName = r.ClientName,
+            Rating = r.Rating,
+            Text = r.Text,
+            Source = r.Source,
+            ReviewedOn = r.ReviewedOn,
+            IsApproved = r.IsApproved,
+            IsFeatured = r.IsFeatured,
+            DisplayOrder = r.DisplayOrder,
+        };
+
+        public Review ToEntity() => new()
+        {
+            ClientName = ClientName.Trim(),
+            Rating = Math.Clamp(Rating, 1, 5),
+            Text = Text.Trim(),
+            Source = string.IsNullOrWhiteSpace(Source) ? null : Source.Trim(),
+            ReviewedOn = ReviewedOn,
+            IsApproved = IsApproved,
+            IsFeatured = IsFeatured,
+            DisplayOrder = DisplayOrder,
+        };
+    }
+}
