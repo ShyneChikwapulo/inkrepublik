@@ -13,6 +13,8 @@ using Inkrepublik.Services.Admin;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Inkrepublik.Services.Storage;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -160,13 +162,32 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// ------------------------------------------------------------
+// Serve runtime-uploaded files. Must run BEFORE MapStaticAssets
+// so we get first crack at /uploads/* paths.
+// ------------------------------------------------------------
+var uploadsPhysicalPath = Path.Combine(app.Environment.WebRootPath, "uploads");
+if (!Directory.Exists(uploadsPhysicalPath))
+{
+    Directory.CreateDirectory(uploadsPhysicalPath);
+}
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPhysicalPath),
+    RequestPath = "/uploads",
+    ContentTypeProvider = new FileExtensionContentTypeProvider
+    {
+        Mappings = { [".webp"] = "image/webp" },
+    },
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseAntiforgery();
+
 app.MapStaticAssets();
 app.MapRazorPages();
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

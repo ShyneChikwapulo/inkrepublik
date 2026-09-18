@@ -1,0 +1,428 @@
+/* ============================================================================
+   ADMIN ARTIST EDIT
+   ============================================================================ */
+
+.admin-breadcrumb {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-text-faint);
+    margin-bottom: 1.5rem;
+}
+
+.admin-breadcrumb a {
+    color: var(--c-text-dim);
+    transition: color var(--transition-fast);
+}
+
+.admin-breadcrumb a:hover {
+    color: var(--c-gold);
+}
+
+.admin-breadcrumb-sep { margin: 0 0.5rem; }
+
+.admin-page-header { margin-bottom: 2rem; }
+
+.admin-page-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--c-text);
+    letter-spacing: -0.01em;
+}
+
+.admin-loading {
+    color: var(--c-text-dim);
+    padding: 3rem 0;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.admin-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+}
+
+.admin-empty-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.action-message {
+    padding: 0.9rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    border: 1px solid;
+}
+
+.action-message--success {
+    color: #6fc27c;
+    border-color: rgba(111, 194, 124, 0.4);
+    background: rgba(111, 194, 124, 0.08);
+}
+
+.action-message--error {
+    color: var(--c-crimson-light);
+    border-color: rgba(176, 32, 32, 0.4);
+    background: rgba(176, 32, 32, 0.08);
+}
+
+/* ---------- Layout ---------- */
+.edit-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.edit-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.edit-section {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+    padding: 2rem;
+}
+
+.edit-section-title {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-crimson);
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--c-border-subtle);
+    margin-bottom: 1.5rem;
+}
+
+.edit-section-hint {
+    font-size: 0.85rem;
+    color: var(--c-text-dim);
+    font-weight: 300;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+/* ---------- Forms ---------- */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--c-text-faint);
+    font-weight: 300;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--c-text-muted);
+}
+
+.form-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--c-crimson);
+    cursor: pointer;
+}
+
+.input-prefix {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--c-border);
+    background: var(--c-surface);
+}
+
+.input-prefix-symbol {
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    color: var(--c-text-faint);
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    border-right: 1px solid var(--c-border);
+}
+
+.input-prefix .form-control {
+    border: none;
+    flex: 1;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--c-border-subtle);
+}
+
+/* ---------- Sidebar ---------- */
+.edit-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: sticky;
+    top: 1.5rem;
+}
+
+.edit-sidebar-block {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-subtle);
+    padding: 1.5rem;
+}
+
+.edit-sidebar-title {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--c-text-faint);
+    margin-bottom: 1rem;
+}
+
+/* ---------- Profile photo ---------- */
+.profile-photo {
+    aspect-ratio: 4 / 5;
+    background: var(--c-surface-3);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-photo-placeholder {
+    color: var(--c-text-faint);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.file-input {
+    display: block;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+}
+
+.file-input::file-selector-button {
+    background: var(--c-surface-3);
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-border-subtle);
+    padding: 0.5rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-right: 0.75rem;
+}
+
+.file-input::file-selector-button:hover {
+    color: var(--c-text);
+    border-color: var(--c-border);
+}
+
+.btn-small {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.65rem;
+    width: 100%;
+    margin-top: 0.75rem;
+}
+
+/* ---------- Preview card ---------- */
+.artist-card-preview {
+    border: 1px solid var(--c-border-subtle);
+    background: var(--c-surface);
+    overflow: hidden;
+}
+
+.preview-image {
+    height: 180px;
+    overflow: hidden;
+    background: var(--c-surface-3);
+}
+
+.preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.85);
+}
+
+.preview-body {
+    padding: 1rem;
+}
+
+.preview-specialty {
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--c-crimson);
+    margin-bottom: 0.4rem;
+}
+
+.preview-name {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 0.5rem;
+}
+
+.preview-bio {
+    font-size: 0.75rem;
+    color: var(--c-text-dim);
+    line-height: 1.5;
+    font-weight: 300;
+}
+
+/* ---------- Portfolio ---------- */
+.portfolio-upload {
+    margin-bottom: 1.5rem;
+}
+
+.portfolio-empty {
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--c-text-faint);
+    background: var(--c-surface-3);
+    font-weight: 300;
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.portfolio-tile {
+    position: relative;
+    background: var(--c-surface-3);
+    overflow: hidden;
+}
+
+.portfolio-tile img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.portfolio-tile-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.portfolio-tile:hover .portfolio-tile-actions {
+    opacity: 1;
+}
+
+.tile-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--c-text);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast);
+}
+
+.tile-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.tile-btn--danger:hover {
+    background: var(--c-crimson);
+}
+
+.tile-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.portfolio-caption-input {
+    display: block;
+    width: 100%;
+    background: var(--c-surface);
+    border: none;
+    border-top: 1px solid var(--c-border-subtle);
+    color: var(--c-text-muted);
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.portfolio-caption-input:focus {
+    border-top-color: var(--c-crimson);
+}
+
+.portfolio-caption-input::placeholder {
+    color: var(--c-text-faint);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+    .edit-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .edit-sidebar {
+        position: static;
+    }
+
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,514 @@
+@page "/admin/artists/new"
+@page "/admin/artists/{Id:int}"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject IAdminArtistService ArtistAdmin
+@inject IFileStorage FileStorage
+@inject NavigationManager Nav
+
+<PageTitle>@(IsNew ? "New Artist" : "Edit Artist") — Inkrepublik Admin</PageTitle>
+
+<p class="admin-breadcrumb">
+    <a href="/admin/artists">Artists</a>
+    <span class="admin-breadcrumb-sep">/</span>
+    <span>@(IsNew ? "New" : _artist?.Name ?? $"#{Id}")</span>
+</p>
+
+@if (_loading)
+{
+    <p class="admin-loading">Loading…</p>
+}
+else if (!IsNew && _artist is null)
+{
+    <div class="admin-empty">
+        <p class="admin-empty-title">Artist not found</p>
+        <a href="/admin/artists" class="btn btn-ghost" style="margin-top: 1.5rem;">← Back to artists</a>
+    </div>
+}
+else
+{
+    <div class="admin-page-header">
+        <h1 class="admin-page-title">@(IsNew ? "New Artist" : "Edit Artist")</h1>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="action-message @(_messageIsSuccess ? "action-message--success" : "action-message--error")">
+            @_message
+        </div>
+    }
+
+    <div class="edit-layout">
+        <!-- LEFT: main form + portfolio -->
+        <div class="edit-main">
+            <!-- Profile form -->
+            <section class="edit-section">
+                <h2 class="edit-section-title">Artist Details</h2>
+
+                <EditForm Model="_form" OnValidSubmit="SaveAsync" FormName="artist-edit">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label" for="art-name">Name *</label>
+                            <InputText id="art-name" class="form-control" @bind-Value="_form.Name" />
+                            <ValidationMessage For="() => _form.Name" />
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label" for="art-title">Title</label>
+                            <InputText id="art-title" class="form-control"
+                                       @bind-Value="_form.Title"
+                                       placeholder="e.g. Lead Artist — Piercing Specialist" />
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="art-spec">Specialties</label>
+                        <InputText id="art-spec" class="form-control"
+                                   @bind-Value="_form.Specialties"
+                                   placeholder="e.g. Fine Line, Botanical, Custom" />
+                        <p class="form-hint">Comma-separated. Shows on cards and detail page.</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="art-bio">Bio</label>
+                        <InputTextArea id="art-bio" class="form-control" rows="6"
+                                       @bind-Value="_form.Bio"
+                                       placeholder="A short paragraph about this artist…" />
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-field">
+                            <label class="form-label" for="art-ig">Instagram handle</label>
+                            <div class="input-prefix">
+                                <span class="input-prefix-symbol">@@</span>
+                                <InputText id="art-ig" class="form-control"
+                                           @bind-Value="_form.InstagramHandle"
+                                           placeholder="username" />
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label" for="art-order">Display order</label>
+                            <InputNumber id="art-order" class="form-control" @bind-Value="_form.DisplayOrder" />
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-checkbox">
+                            <InputCheckbox @bind-Value="_form.IsActive" />
+                            <span>Active (shown on the public site)</span>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" disabled="@_saving">
+                            @(_saving ? "Saving…" : (IsNew ? "Create Artist" : "Save Details"))
+                        </button>
+                        <a href="/admin/artists" class="btn btn-ghost">Back</a>
+                    </div>
+                </EditForm>
+            </section>
+
+            <!-- Portfolio (only when artist exists) -->
+            @if (!IsNew && _artist is not null)
+            {
+                <section class="edit-section">
+                    <h2 class="edit-section-title">Portfolio</h2>
+                    <p class="edit-section-hint">
+                        Upload images of this artist's work. They appear on the
+                        public portfolio page in the order below.
+                    </p>
+
+                    <div class="portfolio-upload">
+                        <InputFile OnChange="UploadPortfolioImage"
+                                   accept="image/jpeg,image/png,image/webp"
+                                   class="file-input" />
+                        <p class="form-hint">
+                            JPG, PNG, or WEBP. Max 5 MB per image.
+                            @if (_uploadingPortfolio)
+                            {
+                                <strong> Uploading…</strong>
+                            }
+                        </p>
+                    </div>
+
+                    @if (_artist.PortfolioImages.Count == 0)
+                    {
+                        <p class="portfolio-empty">No portfolio images yet.</p>
+                    }
+                    else
+                    {
+                        <div class="portfolio-grid">
+                            @foreach (var image in _artist.PortfolioImages.OrderBy(i => i.DisplayOrder))
+                            {
+                                <div class="portfolio-tile">
+                                    <img src="@image.ImagePath" alt="@(image.Caption ?? "Portfolio")" />
+
+                                    <div class="portfolio-tile-actions">
+                                        <button class="tile-btn tile-btn--danger"
+                                                @onclick="() => DeletePortfolioImage(image)"
+                                                disabled="@_updatingPortfolio"
+                                                title="Delete">
+                                            ✕
+                                        </button>
+                                    </div>
+
+                                    <input type="text"
+                                        class="portfolio-caption-input"
+                                        value="@image.Caption"
+                                        placeholder="Add caption…"
+                                        @onchange="e => SaveCaption(image, e.Value?.ToString())" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+
+        <!-- RIGHT: profile photo + preview -->
+        <aside class="edit-sidebar">
+            <div class="edit-sidebar-block">
+                <h3 class="edit-sidebar-title">Profile photo</h3>
+
+                <div class="profile-photo">
+                    @if (!string.IsNullOrWhiteSpace(_form.ProfileImagePath))
+                    {
+                        <img src="@_form.ProfileImagePath" alt="@_form.Name" />
+                    }
+                    else
+                    {
+                        <div class="profile-photo-placeholder">No photo</div>
+                    }
+                </div>
+
+                <InputFile OnChange="UploadProfilePhoto"
+                           accept="image/jpeg,image/png,image/webp"
+                           class="file-input" />
+                <p class="form-hint">
+                    JPG, PNG, or WEBP. Max 5 MB.
+                    @if (_uploadingProfile)
+                    {
+                        <strong> Uploading…</strong>
+                    }
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(_form.ProfileImagePath) && !IsNew)
+                {
+                    <button class="btn btn-ghost btn-small"
+                            @onclick="RemoveProfilePhoto"
+                            disabled="@_saving">Remove photo</button>
+                }
+            </div>
+
+            <div class="edit-sidebar-block">
+                <h3 class="edit-sidebar-title">Preview</h3>
+                <div class="artist-card-preview">
+                    <div class="preview-image">
+                        @if (!string.IsNullOrWhiteSpace(_form.ProfileImagePath))
+                        {
+                            <img src="@_form.ProfileImagePath" alt="Preview" />
+                        }
+                    </div>
+                    <div class="preview-body">
+                        @if (!string.IsNullOrWhiteSpace(_form.Specialties))
+                        {
+                            <p class="preview-specialty">@_form.Specialties</p>
+                        }
+                        <p class="preview-name">@(string.IsNullOrWhiteSpace(_form.Name) ? "Artist name" : _form.Name)</p>
+                        @if (!string.IsNullOrWhiteSpace(_form.Bio))
+                        {
+                            <p class="preview-bio">@Truncate(_form.Bio, 120)</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private ArtistForm _form = new();
+    private Artist? _artist;
+    private bool _loading = true;
+    private bool _saving;
+    private bool _uploadingProfile;
+    private bool _uploadingPortfolio;
+    private bool _updatingPortfolio;
+    private string? _message;
+    private bool _messageIsSuccess;
+
+    private bool IsNew => !Id.HasValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+
+        if (IsNew)
+        {
+            _form = new ArtistForm { IsActive = true, DisplayOrder = 100 };
+            _artist = null;
+        }
+        else
+        {
+            _artist = await ArtistAdmin.GetByIdWithPortfolioAsync(Id!.Value);
+            if (_artist is not null)
+            {
+                _form = ArtistForm.FromEntity(_artist);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _message = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var created = await ArtistAdmin.CreateAsync(_form.ToEntity());
+                Nav.NavigateTo($"/admin/artists/{created.Id}");
+            }
+            else
+            {
+                var updated = _form.ToEntity();
+                updated.Id = Id!.Value;
+                updated.ProfileImagePath = _form.ProfileImagePath;
+
+                var ok = await ArtistAdmin.UpdateAsync(updated);
+
+                if (ok)
+                {
+                    _artist = await ArtistAdmin.GetByIdWithPortfolioAsync(Id!.Value);
+                    _messageIsSuccess = true;
+                    _message = "Artist details saved.";
+                }
+                else
+                {
+                    _messageIsSuccess = false;
+                    _message = "Couldn't save changes.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _messageIsSuccess = false;
+            _message = "Something went wrong saving the artist.";
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Profile photo
+    // ----------------------------------------------------------------
+    private async Task UploadProfilePhoto(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+
+        _uploadingProfile = true;
+        _message = null;
+
+        try
+        {
+            // For new artists we don't have an ID yet — save to a temp subdir.
+            var folder = IsNew ? "unsorted" : Id!.Value.ToString();
+            var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+            var relativePath = $"artists/{folder}/profile{ext}";
+
+            await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            var url = await FileStorage.SaveAsync(stream, file.Name, relativePath);
+
+            _form.ProfileImagePath = url;
+
+            // If the artist already exists, persist immediately.
+            if (!IsNew && _artist is not null)
+            {
+                var updated = _form.ToEntity();
+                updated.Id = Id!.Value;
+                await ArtistAdmin.UpdateAsync(updated);
+                _artist = await ArtistAdmin.GetByIdWithPortfolioAsync(Id!.Value);
+            }
+
+            _messageIsSuccess = true;
+            _message = IsNew
+                ? "Photo uploaded. Save the artist to keep it."
+                : "Profile photo updated.";
+        }
+        catch (Exception ex)
+        {
+            _messageIsSuccess = false;
+            _message = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            _uploadingProfile = false;
+        }
+    }
+
+    private async Task RemoveProfilePhoto()
+    {
+        if (string.IsNullOrWhiteSpace(_form.ProfileImagePath)) return;
+
+        try
+        {
+            await FileStorage.DeleteAsync(_form.ProfileImagePath);
+        }
+        catch { /* deleting a missing file is fine */ }
+
+        _form.ProfileImagePath = null;
+
+        if (!IsNew && _artist is not null)
+        {
+            var updated = _form.ToEntity();
+            updated.Id = Id!.Value;
+            await ArtistAdmin.UpdateAsync(updated);
+            _artist = await ArtistAdmin.GetByIdWithPortfolioAsync(Id!.Value);
+        }
+
+        _messageIsSuccess = true;
+        _message = "Profile photo removed.";
+    }
+
+    // ----------------------------------------------------------------
+    // Portfolio
+    // ----------------------------------------------------------------
+    private async Task UploadPortfolioImage(InputFileChangeEventArgs e)
+    {
+        if (IsNew || _artist is null) return;
+
+        var file = e.File;
+        if (file is null) return;
+
+        _uploadingPortfolio = true;
+        _message = null;
+
+        try
+        {
+            var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+            var filename = $"{Guid.NewGuid():N}{ext}";
+            var relativePath = $"artists/{_artist.Id}/portfolio/{filename}";
+
+            await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            var url = await FileStorage.SaveAsync(stream, file.Name, relativePath);
+
+            await ArtistAdmin.AddPortfolioImageAsync(_artist.Id, url, caption: null);
+
+            _artist = await ArtistAdmin.GetByIdWithPortfolioAsync(_artist.Id);
+
+            _messageIsSuccess = true;
+            _message = "Portfolio image uploaded.";
+        }
+        catch (Exception ex)
+        {
+            _messageIsSuccess = false;
+            _message = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            _uploadingPortfolio = false;
+        }
+    }
+
+    private async Task DeletePortfolioImage(ArtistImage image)
+    {
+        if (_artist is null) return;
+
+        _updatingPortfolio = true;
+        _message = null;
+
+        try
+        {
+            await ArtistAdmin.DeletePortfolioImageAsync(image.Id);
+            try { await FileStorage.DeleteAsync(image.ImagePath); } catch { }
+
+            _artist = await ArtistAdmin.GetByIdWithPortfolioAsync(_artist.Id);
+            _messageIsSuccess = true;
+            _message = "Image deleted.";
+        }
+        finally
+        {
+            _updatingPortfolio = false;
+        }
+    }
+
+    private async Task SaveCaption(ArtistImage image, string? caption)
+    {
+        if (image.Caption == caption) return;
+
+        await ArtistAdmin.UpdatePortfolioCaptionAsync(image.Id, caption);
+        image.Caption = string.IsNullOrWhiteSpace(caption) ? null : caption.Trim();
+    }
+
+    private static string Truncate(string s, int max)
+        => s.Length <= max ? s : s[..max] + "…";
+
+    // ----------------------------------------------------------------
+    // Form model
+    // ----------------------------------------------------------------
+    public class ArtistForm
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(120)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(160)]
+        public string? Title { get; set; }
+
+        [StringLength(4000)]
+        public string? Bio { get; set; }
+
+        [StringLength(400)]
+        public string? Specialties { get; set; }
+
+        [StringLength(80)]
+        public string? InstagramHandle { get; set; }
+
+        public string? ProfileImagePath { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        public int DisplayOrder { get; set; }
+
+        public static ArtistForm FromEntity(Artist a) => new()
+        {
+            Name = a.Name,
+            Title = a.Title,
+            Bio = a.Bio,
+            Specialties = a.Specialties,
+            InstagramHandle = a.InstagramHandle,
+            ProfileImagePath = a.ProfileImagePath,
+            IsActive = a.IsActive,
+            DisplayOrder = a.DisplayOrder,
+        };
+
+        public Artist ToEntity() => new()
+        {
+            Name = Name.Trim(),
+            Title = string.IsNullOrWhiteSpace(Title) ? null : Title.Trim(),
+            Bio = string.IsNullOrWhiteSpace(Bio) ? null : Bio.Trim(),
+            Specialties = string.IsNullOrWhiteSpace(Specialties) ? null : Specialties.Trim(),
+            InstagramHandle = string.IsNullOrWhiteSpace(InstagramHandle)
+                ? null
+                : InstagramHandle.Trim().TrimStart('@'),
+            ProfileImagePath = ProfileImagePath,
+            IsActive = IsActive,
+            DisplayOrder = DisplayOrder,
+        };
+    }
+}
