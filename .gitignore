@@ -75,3 +75,9 @@ EOF
 # User uploads (kept out of git — these are runtime data, not source)
 src/Inkrepublik.Web/wwwroot/uploads/
 !src/Inkrepublik.Web/wwwroot/uploads/.gitkeep
+
+
+# SQLite database files (runtime data, never committed)
+*.db
+*.db-shm
+*.db-wal

@@ -15,24 +15,44 @@ using System.Security.Claims;
 using Inkrepublik.Services.Storage;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ------------------------------------------------------------
 // Database
 //
-// We use AddDbContextFactory (not AddDbContext) because Blazor Server
-// scopes services to the entire circuit, not per-request. Multiple
-// components can call the DB concurrently, and DbContext is NOT
-// thread-safe. The factory lets each operation create its own short-
-// lived context.
+// The provider is selected by the DatabaseProvider config value:
+//   "SqlServer" (default) or "Sqlite".
+//
+// Local dev uses SqlServer via docker-compose.
+// Render production uses Sqlite (ephemeral file, but simple).
 // ------------------------------------------------------------
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException(
-        "Connection string 'DefaultConnection' not found in configuration.");
+var dbProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SqlServer";
 
-builder.Services.AddDbContextFactory<InkrepublikDbContext>(options =>
-    options.UseSqlServer(connectionString));
+if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+{
+    var sqlitePath = builder.Configuration.GetValue<string>("DatabasePath") ?? "inkrepublik.db";
+    var fullPath = Path.IsPathRooted(sqlitePath)
+        ? sqlitePath
+        : Path.Combine(builder.Environment.ContentRootPath, sqlitePath);
+
+    builder.Services.AddDbContextFactory<InkrepublikDbContext>(options =>
+        options.UseSqlite($"Data Source={fullPath}"));
+
+    Console.WriteLine($"✓ Database provider: Sqlite ({fullPath})");
+}
+else
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException(
+            "Connection string 'DefaultConnection' not found in configuration.");
+
+    builder.Services.AddDbContextFactory<InkrepublikDbContext>(options =>
+        options.UseSqlServer(connectionString));
+
+    Console.WriteLine("✓ Database provider: SqlServer");
+}
     // ------------------------------------------------------------
     // Application services (read-side queries)
     // ------------------------------------------------------------
@@ -125,13 +145,16 @@ builder.Services.AddRazorComponents()
 var app = builder.Build();
 
 // ------------------------------------------------------------
-// Database migration + seed (development convenience)
+// Database initialization on startup.
 //
-// In development we auto-apply migrations and seed on startup so the
-// developer never has to remember to run `dotnet ef database update`.
-// In production this is gated by config (Phase 7).
+// SqlServer: apply migrations.
+// Sqlite:    create schema directly (no migrations — the demo
+//            deployment is single-use and doesn't need incremental
+//            schema changes). When the studio signs on, we'll
+//            switch to a proper Postgres setup with migrations.
+//
+// The seeder is idempotent, so this is safe to run on every start.
 // ------------------------------------------------------------
-if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<InkrepublikDbContext>>();
@@ -144,12 +167,21 @@ if (app.Environment.IsDevelopment())
     try
     {
         await using var db = await dbFactory.CreateDbContextAsync();
-        await db.Database.MigrateAsync();
+
+        if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            await db.Database.EnsureCreatedAsync();
+        }
+        else
+        {
+            await db.Database.MigrateAsync();
+        }
+
         await DbSeeder.SeedAsync(db, logger, adminEmail, adminPassword, hasher.Hash);
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Database migration or seeding failed on startup.");
+        logger.LogError(ex, "Database initialization failed on startup.");
         throw;
     }
 }
