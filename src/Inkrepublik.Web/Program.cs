@@ -15,7 +15,7 @@ using System.Security.Claims;
 using Inkrepublik.Services.Storage;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
