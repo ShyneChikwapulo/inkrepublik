@@ -255,7 +255,7 @@ public static class DbSeeder
             new() { Key = "contact.address.line1", Value = "Hout Bay", Group = "Contact", Description = "First line of studio address" },
             new() { Key = "contact.address.line2", Value = "Cape Town, South Africa", Group = "Contact", Description = "Second line of studio address" },
             new() { Key = "contact.email", Value = "info@inkrepublikcpt.com", Group = "Contact", Description = "Studio contact email" },
-            new() { Key = "contact.phone", Value = "", Group = "Contact", Description = "Studio phone number (optional)" },
+            new() { Key = "contact.phone", Value = "065 676 7289", Group = "Contact", Description = "Studio phone number (optional)" },
             new() { Key = "contact.hours.weekday", Value = "Tue–Fri: 10:00 – 18:00", Group = "Contact", Description = "Weekday hours" },
             new() { Key = "contact.hours.saturday", Value = "Sat: 10:00 – 16:00", Group = "Contact", Description = "Saturday hours" },
             new() { Key = "contact.hours.sunday", Value = "Sun–Mon: Closed", Group = "Contact", Description = "Sunday/Monday hours" },
