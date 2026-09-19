@@ -29,21 +29,26 @@ public class ResendApiEmailSender : IEmailSender
 
     public async Task SendAsync(EmailMessage message, CancellationToken ct = default)
     {
-        var email = new Resend.EmailMessage();
-        email.From = string.IsNullOrWhiteSpace(_options.FromName)
-            ? _options.FromAddress
-            : $"{_options.FromName} <{_options.FromAddress}>";
+        var email = new Resend.EmailMessage
+        {
+            From = string.IsNullOrWhiteSpace(_options.FromName)
+                ? _options.FromAddress
+                : $"{_options.FromName} <{_options.FromAddress}>",
+            Subject = message.Subject,
+            HtmlBody = message.HtmlBody,
+            TextBody = message.TextBody,
+        };
 
+        // Assign collections to freshly-created lists. The SDK leaves these
+        // properties null by default, so we can't append or reassign without
+        // initializing them first.
         email.To.Add(message.To);
-        email.Subject = message.Subject;
-        email.HtmlBody = message.HtmlBody;
-        email.TextBody = message.TextBody;
 
         if (!string.IsNullOrWhiteSpace(message.ReplyTo))
         {
+            email.ReplyTo ??= new EmailAddressList();
             email.ReplyTo.Add(message.ReplyTo);
         }
-
         try
         {
             await _resend.EmailSendAsync(email, ct);
