@@ -1,0 +1,53 @@
+/* ============================================================================
+   WHATSAPP FLOATING BUBBLE
+   ============================================================================ */
+
+.whatsapp-bubble {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 40;
+
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+
+    background: #25D366;
+    color: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+
+    transition: transform var(--transition-fast),
+                box-shadow var(--transition-fast);
+}
+
+.whatsapp-bubble:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.whatsapp-bubble svg {
+    width: 30px;
+    height: 30px;
+}
+
+/* On mobile, keep it out of the way of the mobile menu */
+@media (max-width: 640px) {
+    .whatsapp-bubble {
+        bottom: 1.25rem;
+        right: 1.25rem;
+        width: 52px;
+        height: 52px;
+    }
+
+    .whatsapp-bubble svg {
+        width: 26px;
+        height: 26px;
+    }
+}

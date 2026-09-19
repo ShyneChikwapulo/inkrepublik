@@ -31,8 +31,8 @@
 }
 
 .about-band-logo {
-    width: 90px;
-    height: 90px;
+    width: 150px;
+    height: 150px;
     object-fit: contain;
     margin: 0 auto 2rem;
     filter: brightness(1.15);
