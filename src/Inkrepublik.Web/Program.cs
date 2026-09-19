@@ -15,6 +15,7 @@ using System.Security.Claims;
 using Inkrepublik.Services.Storage;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
+using Resend;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -105,34 +106,41 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.Configure<StudioOptions>(
+    builder.Configuration.GetSection(StudioOptions.SectionName));
 
 // ------------------------------------------------------------
 // Email
 //
-// In development we use ConsoleEmailSender (no SMTP needed — emails
-// print to the console). In production we swap to SmtpEmailSender.
-// The choice is based on the Smtp:Enabled config flag.
+// We use Resend's HTTPS API instead of SMTP because cloud hosts
+// (Render, Railway, Heroku) block outbound SMTP on free tiers.
+// The API uses port 443 — same as web traffic — and is never blocked.
+//
+// Fallback: if Resend__ApiKey is missing, use ConsoleEmailSender.
 // ------------------------------------------------------------
-builder.Services.Configure<SmtpOptions>(
-    builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.Configure<ResendOptions>(
+    builder.Configuration.GetSection(ResendOptions.SectionName));
 
-builder.Services.Configure<StudioOptions>(
-    builder.Configuration.GetSection(StudioOptions.SectionName));
+var resendApiKey = builder.Configuration.GetValue<string>("Resend:ApiKey");
 
-var smtpEnabled = builder.Configuration.GetValue<bool>("Smtp:Enabled");
-var smtpHost = builder.Configuration.GetValue<string>("Smtp:Host") ?? "(unset)";
-
-if (smtpEnabled)
+if (!string.IsNullOrWhiteSpace(resendApiKey))
 {
-    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
-    Console.WriteLine($"✓ Email: SMTP enabled (host: {smtpHost})");
+    builder.Services.AddOptions();
+    builder.Services.AddHttpClient<ResendClient>();
+    builder.Services.Configure<ResendClientOptions>(o =>
+    {
+        o.ApiToken = resendApiKey;
+    });
+    builder.Services.AddTransient<IResend, ResendClient>();
+    builder.Services.AddScoped<IEmailSender, ResendApiEmailSender>();
+
+    Console.WriteLine("✓ Email: Resend HTTPS API");
 }
 else
 {
     builder.Services.AddScoped<IEmailSender, ConsoleEmailSender>();
-    Console.WriteLine("✓ Email: console mode (SMTP disabled)");
+    Console.WriteLine("✓ Email: console mode (no Resend API key)");
 }
-
 // ------------------------------------------------------------
 // Booking
 // ------------------------------------------------------------

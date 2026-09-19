@@ -50,6 +50,10 @@ public class SmtpEmailSender : IEmailSender
         // checks is a common workaround — the certificate chain is still validated.
         client.CheckCertificateRevocation = false;
 
+        // Timeouts so a stalled SMTP connection never hangs a user-facing request.
+        client.Timeout = 10_000;              // command timeout (10s)
+        
+
         try
         {
             var socketOptions = _options.UseStartTls
