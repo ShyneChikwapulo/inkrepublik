@@ -294,23 +294,23 @@ The project is being developed incrementally.
 
 ### Phase 2C — DbContext + Relationships
 
-* [ ] Create Entity Framework Core `DbContext`
-* [ ] Configure entity relationships
-* [ ] Configure database constraints
-* [ ] Configure indexes where required
+* [x] Create Entity Framework Core `DbContext`
+* [x] Configure entity relationships
+* [x] Configure database constraints
+* [x] Configure indexes where required
 
 ### Phase 2D — Initial Migration
 
-* [ ] Create initial EF Core migration
-* [ ] Apply migration to local SQL Server database
-* [ ] Verify database schema
+* [x] Create initial EF Core migration
+* [x] Apply migration to local SQL Server database
+* [x] Verify database schema
 
 ### Phase 2E — Seed Data + Dependency Injection
 
-* [ ] Create development seed data
-* [ ] Configure dependency injection
-* [ ] Connect application services
-* [ ] Verify end-to-end database access
+* [x] Create development seed data
+* [x] Configure dependency injection
+* [x] Connect application services
+* [x] Verify end-to-end database access
 
 ### Phase 3 — Public Marketing Site
 
@@ -324,55 +324,55 @@ The project is being developed incrementally.
 
 ### Phase 4 — Booking Request Flow
 
-* [ ] Booking form
-* [ ] Client information
-* [ ] Tattoo requirements
-* [ ] Preferred dates
-* [ ] Booking status
-* [ ] Email notifications
-* [ ] Booking persistence
+* [x] Booking form
+* [x] Client information
+* [x] Tattoo requirements
+* [x] Preferred dates
+* [x] Booking status
+* [x] Email notifications
+* [x] Booking persistence
 
 ### Phase 5 — Admin Area
 
-* [ ] Admin authentication
-* [ ] Dashboard
-* [ ] Booking management
-* [ ] Client management
-* [ ] Artist management
-* [ ] Portfolio/content management
+* [x] Admin authentication
+* [x] Dashboard
+* [x] Booking management
+* [x] Client management
+* [x] Artist management
+* [x] Portfolio/content management
 
 ### Phase 6 — Client Magic-Link Polish
 
-* [ ] Secure client magic links
-* [ ] Booking status access
-* [ ] Client booking details
-* [ ] Email-based authentication flow
-* [ ] Expiration and security handling
+* [x] Secure client magic links
+* [x] Booking status access
+* [x] Client booking details
+* [x] Email-based authentication flow
+* [x] Expiration and security handling
 
 ### Phase 7 — Dockerize for Render
 
-* [ ] Create production Dockerfile
-* [ ] Configure production environment variables
-* [ ] Configure production database connection
-* [ ] Test production container locally
+* [x] Create production Dockerfile
+* [x] Configure production environment variables
+* [x] Configure production database connection
+* [x] Test production container locally
 
 ### Phase 8 — Deploy to Render
 
-* [ ] Configure Render service
-* [ ] Configure production database
-* [ ] Configure environment variables
-* [ ] Configure deployment
-* [ ] Verify production application
+* [x] Configure Render service
+* [x] Configure production database
+* [x] Configure environment variables
+* [x] Configure deployment
+* [x] Verify production application
 
 ### Phase 9 — Studio Handover & Real Content
 
-* [ ] Replace development content
-* [ ] Add real studio information
-* [ ] Add real artist profiles
-* [ ] Add real portfolio content
-* [ ] Configure production email
-* [ ] Final testing
-* [ ] Studio handover
+* [x] Replace development content
+* [x] Add real studio information
+* [x] Add real artist profiles
+* [x] Add real portfolio content
+* [x] Configure production email
+* [x] Final testing
+* [x] Studio handover
 
 
 ## Future features (post-handover)
@@ -391,7 +391,7 @@ The project is being developed incrementally.
 
 Emails are sent via SMTP using Resend's shared sandbox domain (`onboarding@resend.dev`).
 **In this mode, Resend only delivers to the email address you signed up to Resend with**
-(currently `chikwapuloshine@gmail.com`). This is a Resend sandbox restriction, not a bug
+(currently `Youremail@gmail.com`). This is a Resend sandbox restriction, not a bug
 in the app.
 
 To send to any recipient in development, either:
