@@ -1,402 +1,134 @@
-# Inkrepublik Tattoo Studio — Website & Booking
+# Inkrepublik
 
-A full-stack **ASP.NET Core + Blazor Server** web application for **Inkrepublik Tattoo Studio**, based in Hout Bay, Cape Town.
+A booking website and admin panel for a tattoo studio, built with ASP.NET Core and Blazor Server on .NET 10.
 
-The project is designed to provide a modern public-facing studio website together with an online booking workflow and administrative functionality.
+**[Live demo](https://inkrepublik.onrender.com/)** · Built solo by [Shine Chikwapulo](https://github.com/ShyneChikwapulo)
 
----
+> **Status:** Portfolio project, designed around a tattoo studio in Hout Bay. It has not been presented to the studio yet and holds no real customer data. The hosted demo uses SQLite and local file storage on Render, so data can reset when the service redeploys.
 
-## Local Development
+<!-- Add screenshots to docs/screenshots/ and uncomment:
+![Home page](docs/screenshots/home.png)
+![Booking form](docs/screenshots/booking.png)
+![Admin dashboard](docs/screenshots/admin-dashboard.png)
+-->
 
-### Prerequisites
+## What it does
 
-Before running the project locally, make sure you have the following installed:
+**For clients**
+- Browse artists, services, a gallery and reviews.
+- Submit a booking request through a validated form and receive a confirmation email.
+- Use a private link to view the booking's status, request a new date or cancel it. Links use a 256-bit random token and expire after 30 days.
 
-* [.NET 10 SDK](https://dotnet.microsoft.com/download)
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-* [Visual Studio Code](https://code.visualstudio.com/)
-* [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit)
+**For the studio (admin area)**
+- Cookie-authenticated admin with passwords hashed by ASP.NET Core's password hasher.
+- Pages for the dashboard, bookings (and booking detail), a calendar, artists, services, reviews, messages and site settings.
+- Image uploads for artist and gallery content, checked for extension, size (5 MB) and file signature.
 
----
+## Tech stack
 
-## Getting Started
+| Area | Technology |
+|---|---|
+| Framework | .NET 10, ASP.NET Core, Blazor Server, Razor Pages (login) |
+| Data | Entity Framework Core 10, SQL Server (development), SQLite (demo deployment) |
+| Email | Resend HTTPS API, with a console fallback when no API key is set |
+| Packaging | Docker (multi-stage build, non-root user), Docker Compose for local SQL Server |
+| Hosting | Render |
+| Tests | xUnit |
 
-### 1. Start the Database
+## Architecture
 
-The project uses **SQL Server 2022** running inside Docker for local development.
+The solution has four projects plus a test project:
 
-From the root of the repository, run:
+| Project | Responsibility |
+|---|---|
+| `Inkrepublik.Web` | Blazor components, the admin login pages, startup and dependency injection |
+| `Inkrepublik.Domain` | Entities and enums (bookings, artists, services, reviews and so on) |
+| `Inkrepublik.Data` | `DbContext`, EF Core migrations (SQL Server), idempotent database seeder |
+| `Inkrepublik.Services` | Booking, admin, email and file-storage logic behind interfaces |
+| `Inkrepublik.Tests` | xUnit project |
+
+On startup the app applies migrations (SQL Server) or creates the schema (SQLite), then seeds sample data. The admin account is seeded only when both `Admin:Email` and `Admin:Password` are set.
+
+## Getting started
+
+**Prerequisites:** [.NET 10 SDK](https://dotnet.microsoft.com/download), [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local SQL Server).
 
 ```bash
+git clone https://github.com/ShyneChikwapulo/inkrepublik.git
+cd inkrepublik
+
+# 1. Start SQL Server 2022 in Docker (port 1433)
 docker compose up -d
-```
 
-This starts the SQL Server container in the background.
+# 2. Set an admin password (stored in .NET user secrets, not in the repo)
+dotnet user-secrets set "Admin:Password" "<choose-a-strong-password>" --project src/Inkrepublik.Web
 
-The local SQL Server instance is configured as:
-
-| Setting  | Value                 |
-| -------- | --------------------- |
-| Host     | `localhost`           |
-| Port     | `1433`                |
-| Username | `sa`                  |
-| Password | `Inkrepublik!Dev2026` |
-| Database | Project database      |
-
-> **Note:** On the first startup, SQL Server may take approximately 20 seconds to become fully ready.
-
-You can check the container status with:
-
-```bash
-docker compose ps
-```
-
-To view the latest SQL Server logs:
-
-```bash
-docker compose logs sqlserver --tail 5
-```
-
----
-
-### 2. Run the Application
-
-Once SQL Server is ready, run the Blazor application:
-
-```bash
+# 3. Run the app
+dotnet dev-certs https --trust   # first time only
 dotnet run --project src/Inkrepublik.Web --launch-profile https
 ```
 
-The application should be available at:
+Open <https://localhost:7112>. The admin login is at `/admin/login`, using the email from `Admin:Email` (the Development settings use `admin@inkrepublik.local`) and the password you set.
 
-**https://localhost:7112**
-
-> Your browser may display a warning about the local HTTPS development certificate. This is expected when running ASP.NET Core locally.
-
----
-
-## Stopping the Database
-
-To stop the SQL Server container while keeping its persisted data:
+**No Docker?** Use SQLite instead:
 
 ```bash
-docker compose down
+DatabaseProvider=Sqlite dotnet run --project src/Inkrepublik.Web --launch-profile https
 ```
 
-To stop the container **and delete all Docker volumes/data**:
+**Email.** Without a Resend API key, emails are written to the console log. To send real email:
 
 ```bash
-docker compose down -v
+dotnet user-secrets set "Resend:ApiKey" "re_..." --project src/Inkrepublik.Web
 ```
 
-> ⚠️ **Warning:** `docker compose down -v` permanently deletes the local database data stored in Docker volumes.
+Resend's sandbox sender (`onboarding@resend.dev`) only delivers to the address you signed up with.
 
----
+## Configuration
 
-# Project Structure
+Set these as user secrets, `appsettings` values or environment variables (use `__` instead of `:` in environment variables).
 
-```text
-Inkrepublik.slnx
-│
-├── src/
-│   ├── Inkrepublik.Web/
-│   │   └── Blazor Server application
-│   │       ├── Public website
-│   │       └── Admin area
-│   │
-│   ├── Inkrepublik.Domain/
-│   │   └── Domain entities and enums
-│   │
-│   ├── Inkrepublik.Data/
-│   │   └── Entity Framework Core
-│   │       ├── DbContext
-│   │       └── Database migrations
-│   │
-│   └── Inkrepublik.Services/
-│       └── Application business logic
-│           ├── Email services
-│           └── Magic-link functionality
-│
-├── tests/
-│   └── Inkrepublik.Tests/
-│       └── xUnit tests
-│
-├── docker-compose.yml
-│   └── SQL Server 2022 local development database
-│
-└── README.md
-```
-
----
-
-# Architecture
-
-The solution is separated into several projects to keep the application maintainable and enforce separation of concerns.
-
-### `Inkrepublik.Web`
-
-The presentation layer and main web application.
-
-Responsibilities include:
-
-* Public-facing studio website
-* Blazor Server UI
-* Booking interface
-* Administrative interface
-* Application configuration
-* Dependency injection composition
-
-### `Inkrepublik.Domain`
-
-Contains the core domain model.
-
-Responsibilities include:
-
-* Entities
-* Enums
-* Domain-level concepts
-* Business rules that belong to the domain
-
-This project is intentionally kept independent of infrastructure and framework-specific dependencies where possible.
-
-### `Inkrepublik.Data`
-
-Responsible for persistence and database access.
-
-Responsibilities include:
-
-* Entity Framework Core `DbContext`
-* Entity configurations
-* Database relationships
-* Migrations
-* SQL Server integration
-
-### `Inkrepublik.Services`
-
-Contains application and business logic that sits between the UI and data layers.
-
-Responsibilities include:
-
-* Business workflows
-* Email functionality
-* Magic-link functionality
-* Application services
-
-### `Inkrepublik.Tests`
-
-Contains automated tests for the application.
-
-The project uses **xUnit** as the testing framework.
-
----
-
-# Technology Stack
-
-## Backend
-
-* [.NET 10](https://dotnet.microsoft.com/)
-* [ASP.NET Core](https://dotnet.microsoft.com/apps/aspnet)
-* C#
-* Blazor Server
-* Interactive Server render mode
-
-## Data
-
-* Entity Framework Core 10
-* SQL Server provider
-* SQL Server 2022
-* Docker
+| Key | Purpose |
+|---|---|
+| `DatabaseProvider` | `SqlServer` or `Sqlite` |
+| `ConnectionStrings:DefaultConnection` | SQL Server connection string |
+| `DatabasePath` | SQLite file path |
+| `Resend:ApiKey`, `Resend:FromAddress`, `Resend:FromName` | Email via the Resend API |
+| `Studio:OwnerEmail` | Where new-booking notifications go |
+| `Studio:PublicBaseUrl` | Base URL used in emailed booking links |
+| `Admin:Email`, `Admin:Password` | Admin account created on first start |
 
 ## Testing
 
-* xUnit
+```bash
+dotnet test
+```
 
-## Development Tools
+The test project currently contains only a placeholder test. Real tests are on the roadmap.
 
-* Visual Studio Code
-* C# Dev Kit
-* Docker Desktop
-* Git / GitHub
-
----
-
-# Database
-
-The application uses **Microsoft SQL Server 2022** for local development.
-
-SQL Server is provided through Docker Compose so that developers do not need to install SQL Server directly on their machines.
-
-The development database can therefore be started with:
+## Docker and deployment
 
 ```bash
-docker compose up -d
+docker build -t inkrepublik .
+docker run --rm -p 8080:8080 \
+  -e ASPNETCORE_ENVIRONMENT=Production \
+  -e DatabaseProvider=Sqlite \
+  -e DatabasePath=/app/data/inkrepublik.db \
+  -e Admin__Email=admin@example.com \
+  -e Admin__Password='<choose-a-strong-password>' \
+  -e Studio__PublicBaseUrl=http://localhost:8080 \
+  inkrepublik
 ```
 
-and stopped with:
+The image exposes port 8080 and runs as a non-root user. `/app/data` (database) and `/app/wwwroot/uploads` are writable. Mount volumes there if you need data to survive restarts.
 
-```bash
-docker compose down
-```
+## Roadmap
 
-Database migrations will be managed through **Entity Framework Core** as the project progresses.
+- Unit and integration tests for booking rules, token handling and admin authorisation
+- Login hardening: validate the return URL, add rate limiting or lockout, mark the auth cookie `Secure` in production
+- Persistent production storage (PostgreSQL and object storage for uploads)
+- Facebook gallery sync (planned, not built)
 
----
+## Author
 
-# Development Workflow
-
-A typical local development workflow is:
-
-```text
-Clone Repository
-       │
-       ▼
-Start Docker
-       │
-       ▼
-SQL Server 2022
-       │
-       ▼
-Run ASP.NET Core Application
-       │
-       ▼
-Blazor Server
-       │
-       ▼
-Develop / Test
-       │
-       ▼
-Commit Changes
-```
-
----
-
-# Roadmap
-
-The project is being developed incrementally.
-
-### Phase 1 — Solution Scaffolding
-
-* [x] Create solution structure
-* [x] Create application projects
-* [x] Configure project references
-
-### Phase 2A — SQL Server via Docker Compose
-
-* [x] Configure SQL Server 2022 container
-* [x] Configure Docker Compose
-* [x] Verify local database connectivity
-
-### Phase 2B — Domain Entities and Enums
-
-* [x] Define core domain entities
-* [x] Define domain enums
-* [x] Establish initial domain model
-
-### Phase 2C — DbContext + Relationships
-
-* [x] Create Entity Framework Core `DbContext`
-* [x] Configure entity relationships
-* [x] Configure database constraints
-* [x] Configure indexes where required
-
-### Phase 2D — Initial Migration
-
-* [x] Create initial EF Core migration
-* [x] Apply migration to local SQL Server database
-* [x] Verify database schema
-
-### Phase 2E — Seed Data + Dependency Injection
-
-* [x] Create development seed data
-* [x] Configure dependency injection
-* [x] Connect application services
-* [x] Verify end-to-end database access
-
-### Phase 3 — Public Marketing Site
-
-* [x] 3A — Design system
-* [x] 3B — Layout shell (header, footer)
-* [x] 3C — Home page
-* [x] 3D — Artists listing + detail
-* [x] 3E — Services page
-* [x] 3F — Gallery + Reviews
-* [x] 3G — Contact page
-
-### Phase 4 — Booking Request Flow
-
-* [x] Booking form
-* [x] Client information
-* [x] Tattoo requirements
-* [x] Preferred dates
-* [x] Booking status
-* [x] Email notifications
-* [x] Booking persistence
-
-### Phase 5 — Admin Area
-
-* [x] Admin authentication
-* [x] Dashboard
-* [x] Booking management
-* [x] Client management
-* [x] Artist management
-* [x] Portfolio/content management
-
-### Phase 6 — Client Magic-Link Polish
-
-* [x] Secure client magic links
-* [x] Booking status access
-* [x] Client booking details
-* [x] Email-based authentication flow
-* [x] Expiration and security handling
-
-### Phase 7 — Dockerize for Render
-
-* [x] Create production Dockerfile
-* [x] Configure production environment variables
-* [x] Configure production database connection
-* [x] Test production container locally
-
-### Phase 8 — Deploy to Render
-
-* [x] Configure Render service
-* [x] Configure production database
-* [x] Configure environment variables
-* [x] Configure deployment
-* [x] Verify production application
-
-### Phase 9 — Studio Handover & Real Content
-
-* [x] Replace development content
-* [x] Add real studio information
-* [x] Add real artist profiles
-* [x] Add real portfolio content
-* [x] Configure production email
-* [x] Final testing
-* [x] Studio handover
-
-
-## Future features (post-handover)
-
-- **Facebook Graph API gallery sync** — pull the studio's Facebook Page photos
-  periodically and display them in the gallery. Requires:
-  - Facebook App + Business Manager setup on the studio's side
-  - Long-lived Page Access Token (System User)
-  - A background worker (`IHostedService`) to fetch + download images
-  - Object storage for downloaded images (Render disk is ephemeral)
-  - Manual artist-tagging on synced images
-  Architecture: new `SiteGalleryImage` entity, decoupled from `ArtistImage`.
-
-
-### Email in development
-
-Emails are sent via SMTP using Resend's shared sandbox domain (`onboarding@resend.dev`).
-**In this mode, Resend only delivers to the email address you signed up to Resend with**
-(currently `Youremail@gmail.com`). This is a Resend sandbox restriction, not a bug
-in the app.
-
-To send to any recipient in development, either:
-- Use a Gmail SMTP setup with an app password, or
-- Verify a custom domain on Resend (this is what we'll do in Phase 8 with the studio's domain)
-
-The booking flow itself is unaffected — bookings are always saved, and the owner email
-always delivers. Only the client confirmation email is subject to this restriction.
+Shine Chikwapulo · [GitHub](https://github.com/ShyneChikwapulo) · [LinkedIn](https://www.linkedin.com/in/shine-chikwapulo-741b20265/)
