@@ -6,11 +6,13 @@ A booking website and admin panel for a tattoo studio, built with ASP.NET Core a
 
 > **Status:** Portfolio project, designed around a tattoo studio in Hout Bay. It has not been presented to the studio yet and holds no real customer data. The hosted demo uses SQLite and local file storage on Render, so data can reset when the service redeploys.
 
-<!-- Add screenshots to docs/screenshots/ and uncomment:
+## Screenshots
+
 ![Home page](docs/screenshots/home.png)
+
 ![Booking form](docs/screenshots/booking.png)
+
 ![Admin dashboard](docs/screenshots/admin-dashboard.png)
--->
 
 ## What it does
 
